@@ -46,7 +46,6 @@ async def fetch_token_metadata(session, token_address):
                     'price_usdt': data.get('priceUsdt'),
                     'volume_usdt': data.get('volumeUsdt'),
                     'market_cap_fd': data.get('marketCapFD'),
-                    'market_cap_rank': data.get('marketCapRank'),
                     'price_change_24h': data.get('priceChange24h'),
                     'markets': [
                         {
@@ -76,11 +75,10 @@ async def create_message(session, token_address):
     else:
         token_symbol = token_metadata.get('token_symbol', 'Unknown')
         token_name = token_metadata.get('token_name', 'Unknown')
-        price_usdt = token_metadata.get('price_usdt', 'N/A')
-        volume_usdt = token_metadata.get('volume_usdt', 'N/A')
-        market_cap_fd = token_metadata.get('market_cap_fd', 'N/A')
-        market_cap_rank = token_metadata.get('market_cap_rank', 'N/A')
-        price_change_24h = token_metadata.get('price_change_24h', 'N/A')
+        price_usdt = f"${token_metadata.get('price_usdt', 'N/A')}"
+        volume_usdt = "${:,.2f}".format(token_metadata.get('volume_usdt', 0))
+        market_cap_fd = "${:,.2f}".format(token_metadata.get('market_cap_fd', 0))
+        price_change_24h = "{:.2f}%".format(token_metadata.get('price_change_24h', 0) * 100)
 
         markets_info = "\n".join(
             [f"Market: {market['name']} - Price: {market['price']} - Volume 24h: {market['volume_24h']}"
@@ -93,7 +91,6 @@ async def create_message(session, token_address):
             f"Price (USDT): {price_usdt}\n"
             f"Volume (USDT): {volume_usdt}\n"
             f"Market Cap (FD): {market_cap_fd}\n"
-            f"Market Cap Rank: {market_cap_rank}\n"
             f"Price Change (24h): {price_change_24h}\n"
             f"\nMarkets Information:\n{markets_info}\n"
             f"<a href='https://solscan.io/token/{safely_quote(token_address)}'>Contract Address</a>\n"
@@ -133,3 +130,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
