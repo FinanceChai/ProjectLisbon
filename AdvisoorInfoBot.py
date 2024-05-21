@@ -22,7 +22,7 @@ print(f"SOLSCAN_API_KEY: {SOLSCAN_API_KEY}")
 
 # Check if the TELEGRAM_TOKEN is set
 if not TELEGRAM_TOKEN:
-    raise ValueError("TELEGRAM_BOT_TOKEN environment variable is not set")
+    raise ValueError("TELEGRAM_TOKEN environment variable is not set")
 
 EXCLUDED_SYMBOLS = {"ETH", "BTC", "BONK", "Bonk"}  # Add or modify as necessary
 
