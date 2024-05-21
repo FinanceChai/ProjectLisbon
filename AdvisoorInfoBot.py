@@ -105,13 +105,7 @@ async def create_message(session, token_address):
         ]
         return final_message, InlineKeyboardMarkup(keyboard)
     else:
-        return None, None
-
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        return final_message, reply_markup
-    else:
         return final_message, None
-
 
 async def handle_token_info(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if len(context.args) != 1:
@@ -132,4 +126,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
