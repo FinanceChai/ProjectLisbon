@@ -76,9 +76,13 @@ async def create_message(session, token_address):
         token_symbol = token_metadata.get('token_symbol', 'Unknown')
         token_name = token_metadata.get('token_name', 'Unknown')
         price_usdt = f"${token_metadata.get('price_usdt', 'N/A')}"
-        volume_usdt = "${:,.2f}".format(token_metadata.get('volume_usdt', 0))
-        market_cap_fd = "${:,.2f}".format(token_metadata.get('market_cap_fd', 0))
+        volume_usdt = "${:,.0f}".format(token_metadata.get('volume_usdt', 0))
+        market_cap_fd = "${:,.0f}".format(token_metadata.get('market_cap_fd', 0))
         price_change_24h = "{:.2f}%".format(token_metadata.get('price_change_24h', 0) * 100)
+
+        total_volume = sum(market['volume_24h'] for market in token_metadata['markets'])
+        volume_market_cap_ratio = total_volume / token_metadata.get('market_cap_fd', 1)
+        volume_market_cap_ratio_str = "{:.1f}x".format(volume_market_cap_ratio)
 
         markets_info = "\n".join(
             [f"Market: {market['name']} - Price: {market['price']} - Volume 24h: {market['volume_24h']}"
@@ -93,6 +97,8 @@ async def create_message(session, token_address):
             f"Market Cap (FD): {market_cap_fd}\n"
             f"Price Change (24h): {price_change_24h}\n"
             f"\nMarkets Information:\n{markets_info}\n"
+            f"Total Volume (24h): ${total_volume:,.0f}\n"
+            f"Volume / Market Cap: {volume_market_cap_ratio_str}\n"
             f"<a href='https://solscan.io/token/{safely_quote(token_address)}'>Contract Address</a>\n"
         )
     
@@ -130,4 +136,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
