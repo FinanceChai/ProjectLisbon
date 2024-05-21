@@ -4,7 +4,7 @@ import aiohttp
 from dotenv import load_dotenv
 from telegram import Bot, InlineKeyboardMarkup, InlineKeyboardButton
 from urllib.parse import quote as safely_quote
-from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
+from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, Updater
 from telegram import Update
 
 # Load environment variables from .env file
@@ -14,6 +14,11 @@ load_dotenv()
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
 CHAT_ID = os.getenv('CHAT_ID')
 SOLSCAN_API_KEY = os.getenv('SOLSCAN_API_KEY')
+
+# Debugging: Print environment variables to ensure they are loaded correctly
+print(f"TELEGRAM_TOKEN: {TELEGRAM_TOKEN}")
+print(f"CHAT_ID: {CHAT_ID}")
+print(f"SOLSCAN_API_KEY: {SOLSCAN_API_KEY}")
 
 # Check if the TELEGRAM_TOKEN is set
 if not TELEGRAM_TOKEN:
@@ -115,7 +120,10 @@ async def handle_token_info(update: Update, context: ContextTypes.DEFAULT_TYPE):
     token_address = context.args[0]
     async with aiohttp.ClientSession() as session:
         message, reply_markup = await create_message(session, token_address)
-        await send_telegram_message(Bot(token=TELEGRAM_TOKEN), CHAT_ID, message, reply_markup)
+        if message:
+            await send_telegram_message(Bot(token=TELEGRAM_TOKEN), CHAT_ID, message, reply_markup)
+        else:
+            await update.message.reply_text("Failed to retrieve token information.")
 
 async def send_telegram_message(bot, chat_id, text, reply_markup):
     await bot.send_message(chat_id, text=text, parse_mode='HTML', disable_web_page_preview=True, reply_markup=reply_markup)
