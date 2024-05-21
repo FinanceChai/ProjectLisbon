@@ -52,7 +52,7 @@ async def fetch_token_metadata(session, token_address):
     return None
 
 async def create_message(session, token_address):
-    message_lines = [""]
+    message_lines = ["📝 Token Information 🔮\n"]
     token_metadata = await fetch_token_metadata(session, token_address)
     
     if not token_metadata:
@@ -63,10 +63,17 @@ async def create_message(session, token_address):
     else:
         token_symbol = token_metadata.get('token_symbol', 'Unknown')
         token_name = token_metadata.get('token_name', 'Unknown')
-        price_usdt = f"${token_metadata.get('price_usdt', 'N/A')}"
+        price_usdt = token_metadata.get('price_usdt', 'N/A')
         volume_usdt = "${:,.0f}".format(token_metadata.get('volume_usdt', 0))
         market_cap_fd = "${:,.0f}".format(token_metadata.get('market_cap_fd', 0))
-        price_change_24h = "{:.2f}%".format(token_metadata.get('price_change_24h', 0) * 100)
+
+        if price_usdt != 'N/A' and token_metadata.get('price_change_24h') is not None:
+            price_usdt = float(price_usdt)
+            price_change_24h = token_metadata.get('price_change_24h')
+            price_change_ratio = price_change_24h / (price_usdt - price_change_24h)
+            price_change_24h_str = "{:.2f}%".format(price_change_ratio * 100)
+        else:
+            price_change_24h_str = "N/A"
 
         total_volume = token_metadata.get('volume_usdt', 0)
         market_cap = token_metadata.get('market_cap_fd', 1)
@@ -74,34 +81,36 @@ async def create_message(session, token_address):
         volume_market_cap_ratio_str = "{:.2f}x".format(volume_market_cap_ratio)
 
         message_lines.append(
-            f"<b>Token Name: {token_name}</b>\n\n"
-            f"<u>Token Overview</u>\n\n"
+            f"Token Name: {token_name}\n\n"
+            f"<b><u>Token Overview</u></b>\n"
             f"🔣 Token Symbol: {token_symbol}\n"
-            f"📈 Price (USDT): {price_usdt}\n"
+            f"📈 Price (USDT): ${price_usdt}\n"
             f"⛽ Volume (USDT): {volume_usdt}\n"
             f"🌛 Market Cap (FD): {market_cap_fd}\n\n"
-            f"<u>Recent Market Activity</u>\n\n"
-            f"💹 Price Change (24h): {price_change_24h}\n"
+            f"<b><u>Recent Market Activity</u></b>\n"
+            f"💹 Price Change (24h): {price_change_24h_str}\n"
             f"📊 Total Volume (24h): ${total_volume:,.0f}\n"
             f"🔍 Volume / Market Cap: {volume_market_cap_ratio_str}\n\n"
-            f"<u>Risk Management</u>\n\n"
-            f"<a href='https://solscan.io/token/{safely_quote(token_address)}'>Contract Address</a>\n"
-            f"<a href='https://rugcheck.xyz/tokens/{safely_quote('token_address')}'>RugCheck</a>\n"
-
+            f"<b><u>Risk Management</u></b>\n"
+            f"<a href='https://solscan.io/token/{safely_quote(token_address)}'>Go to Contract Address</a>\n"
+            f"<a href='https://rugcheck.xyz/tokens/{safely_quote(token_address)}'>RugCheck</a>\n"
         )
     
     final_message = '\n'.join(message_lines)
 
     if len(message_lines) > 1:
         keyboard = [
-            [InlineKeyboardButton("Photon 💡", url="https://photon-sol.tinyastro.io/@rubberd"),
-            InlineKeyboardButton("Pepeboost 🐸", url="https://t.me/pepeboost_sol07_bot?start=ref_01inkp")]
+            [InlineKeyboardButton("Trojan", url="https://t.me/solana_trojanbot?start=r-0xrubberd319503"),
+             InlineKeyboardButton("Photon", url="https://photon-sol.tinyastro.io/@rubberd")],
+            [InlineKeyboardButton("Bonkbot", url="https://t.me/bonkbot_bot?start=ref_al2no"),
+             InlineKeyboardButton("BananaGun", url="https://t.me/BANANAGUNSNIPER_BOT?START=REF_RUBBERD")]
         ]
 
         reply_markup = InlineKeyboardMarkup(keyboard)
         return final_message, reply_markup
     else:
         return final_message, None
+
 
 async def handle_token_info(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if len(context.args) != 1:
