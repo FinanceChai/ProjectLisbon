@@ -30,7 +30,7 @@ EXCLUDED_SYMBOLS = {"ETH", "BTC", "BONK", "Bonk"}  # Add or modify as necessary
 application = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
 
 async def fetch_token_metadata(session, token_address):
-    url = f"https://pro-api.solscan.io/v1.0/market/token/{safely_quote(token_address)}"
+    url = f"https://pro-api.solscan.io/v1.0/market/token/{safely_quote(token_address)}?limit=10&offset=0"
     headers = {'accept': '*/*', 'token': SOLSCAN_API_KEY}
     async with session.get(url, headers=headers) as response:
         if response.status == 200:
@@ -39,22 +39,22 @@ async def fetch_token_metadata(session, token_address):
                 market = data['markets'][0]  # Assuming you want the first market listed
 
                 result = {
-                    'mint_address': market.get('base', {}).get('address'),
                     'token_symbol': market.get('base', {}).get('symbol'),
                     'token_name': market.get('base', {}).get('name'),
                     'decimals': market.get('base', {}).get('decimals'),
                     'icon_url': market.get('base', {}).get('icon'),
-                    'website': market.get('base', {}).get('website', 'N/A'),
-                    'twitter': market.get('base', {}).get('twitter', 'N/A'),
-                    'market_cap_rank': market.get('market_cap_rank', 'N/A'),
-                    'price_usdt': market.get('price', 'N/A'),
-                    'market_cap_fd': market.get('market_cap_fd', 'N/A'),
-                    'volume': market.get('volume24h', 'N/A'),
-                    'tag': market.get('tag', 'N/A'),
-                    'total_liquidity': market.get('liquidity', 'N/A'),
-                    'initial_lp_size': market.get('initial_lp_size', 'N/A'),
-                    'mint_disabled': market.get('mint', {}).get('freezeAuthority', 'N/A'),
-                    'lp_burned': market.get('lp_burned', 'N/A')
+                    'price_usdt': data.get('priceUsdt'),
+                    'volume_usdt': data.get('volumeUsdt'),
+                    'market_cap_fd': data.get('marketCapFD'),
+                    'market_cap_rank': data.get('marketCapRank'),
+                    'price_change_24h': data.get('priceChange24h'),
+                    'markets': [
+                        {
+                            'name': market.get('name'),
+                            'price': market.get('price'),
+                            'volume_24h': market.get('volume24h')
+                        } for market in data['markets']
+                    ]
                 }
 
                 return result
@@ -63,19 +63,6 @@ async def fetch_token_metadata(session, token_address):
         else:
             print(f"Failed to fetch metadata, status code: {response.status}")
     return None
-
-async def fetch_top_holders(session, token_address):
-    url = f"https://pro-api.solscan.io/v1.0/token/holders/{safely_quote(token_address)}?limit=10"
-    headers = {'accept': '*/*', 'token': SOLSCAN_API_KEY}
-    async with session.get(url, headers=headers) as response:
-        if response.status == 200:
-            data = await response.json()
-            holders = data.get('data', [])
-            top_holders = [{'address': holder['owner'], 'amount': holder['amount']} for holder in holders]
-            return top_holders
-        else:
-            print(f"Failed to fetch top holders, status code: {response.status}")
-    return []
 
 async def create_message(session, token_address):
     message_lines = ["📝 Token Information 🔮\n"]
@@ -89,28 +76,26 @@ async def create_message(session, token_address):
     else:
         token_symbol = token_metadata.get('token_symbol', 'Unknown')
         token_name = token_metadata.get('token_name', 'Unknown')
-        market_cap = token_metadata.get('market_cap_fd', 'N/A')
-        total_liquidity = token_metadata.get('total_liquidity', 'N/A')
-        initial_lp_size = token_metadata.get('initial_lp_size', 'N/A')
-        mint_disabled = token_metadata.get('mint_disabled', 'N/A')
-        lp_burned = token_metadata.get('lp_burned', 'N/A')
-        website = token_metadata.get('website', 'N/A')
-        twitter = token_metadata.get('twitter', 'N/A')
-        
-        top_holders = await fetch_top_holders(session, token_address)
-        top_holders_list = ', '.join([holder['address'] for holder in top_holders])
-        
+        price_usdt = token_metadata.get('price_usdt', 'N/A')
+        volume_usdt = token_metadata.get('volume_usdt', 'N/A')
+        market_cap_fd = token_metadata.get('market_cap_fd', 'N/A')
+        market_cap_rank = token_metadata.get('market_cap_rank', 'N/A')
+        price_change_24h = token_metadata.get('price_change_24h', 'N/A')
+
+        markets_info = "\n".join(
+            [f"Market: {market['name']} - Price: {market['price']} - Volume 24h: {market['volume_24h']}"
+             for market in token_metadata['markets']]
+        )
+
         message_lines.append(
             f"Token Symbol: {token_symbol}\n"
             f"Token Name: {token_name}\n"
-            f"Market Cap: {market_cap}\n"
-            f"Total Liquidity: {total_liquidity}\n"
-            f"Initial LP Size: {initial_lp_size}\n"
-            f"Mint Disabled: {mint_disabled}\n"
-            f"LP Burned: {lp_burned}\n"
-            f"Top 10 Holders: {top_holders_list}\n"
-            f"Website: {website}\n"
-            f"Twitter: {twitter}\n"
+            f"Price (USDT): {price_usdt}\n"
+            f"Volume (USDT): {volume_usdt}\n"
+            f"Market Cap (FD): {market_cap_fd}\n"
+            f"Market Cap Rank: {market_cap_rank}\n"
+            f"Price Change (24h): {price_change_24h}\n"
+            f"\nMarkets Information:\n{markets_info}\n"
             f"<a href='https://solscan.io/token/{safely_quote(token_address)}'>Contract Address</a>\n"
         )
     
@@ -148,4 +133,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
