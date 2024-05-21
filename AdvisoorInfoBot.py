@@ -46,14 +46,7 @@ async def fetch_token_metadata(session, token_address):
                     'price_usdt': data.get('priceUsdt'),
                     'volume_usdt': data.get('volumeUsdt'),
                     'market_cap_fd': data.get('marketCapFD'),
-                    'price_change_24h': data.get('priceChange24h'),
-                    'markets': [
-                        {
-                            'name': market.get('name'),
-                            'price': market.get('price'),
-                            'volume_24h': market.get('volume24h')
-                        } for market in data['markets']
-                    ]
+                    'price_change_24h': data.get('priceChange24h')
                 }
 
                 return result
@@ -80,14 +73,10 @@ async def create_message(session, token_address):
         market_cap_fd = "${:,.0f}".format(token_metadata.get('market_cap_fd', 0))
         price_change_24h = "{:.2f}%".format(token_metadata.get('price_change_24h', 0) * 100)
 
-        total_volume = sum(market['volume_24h'] for market in token_metadata['markets'])
-        volume_market_cap_ratio = total_volume / token_metadata.get('market_cap_fd', 1)
-        volume_market_cap_ratio_str = "{:.1f}x".format(volume_market_cap_ratio)
-
-        markets_info = "\n".join(
-            [f"Market: {market['name']} - Price: {market['price']} - Volume 24h: {market['volume_24h']}"
-             for market in token_metadata['markets']]
-        )
+        total_volume = token_metadata.get('volume_usdt', 0)
+        market_cap = token_metadata.get('market_cap_fd', 1)
+        volume_market_cap_ratio = total_volume / market_cap
+        volume_market_cap_ratio_str = "{:.2f}x".format(volume_market_cap_ratio)
 
         message_lines.append(
             f"Token Symbol: {token_symbol}\n"
@@ -96,7 +85,6 @@ async def create_message(session, token_address):
             f"Volume (USDT): {volume_usdt}\n"
             f"Market Cap (FD): {market_cap_fd}\n"
             f"Price Change (24h): {price_change_24h}\n"
-            f"\nMarkets Information:\n{markets_info}\n"
             f"Total Volume (24h): ${total_volume:,.0f}\n"
             f"Volume / Market Cap: {volume_market_cap_ratio_str}\n"
             f"<a href='https://solscan.io/token/{safely_quote(token_address)}'>Contract Address</a>\n"
@@ -136,3 +124,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
