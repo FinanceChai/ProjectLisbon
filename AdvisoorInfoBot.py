@@ -100,7 +100,7 @@ async def create_message(session, token_address):
 
     if len(message_lines) > 1:
         keyboard = [
-            [InlineKeyboardButton("Photon", url="https://photon-sol.tinyastro.io/@rubberd"),
+            [InlineKeyboardButton("Photon 💡", url="https://photon-sol.tinyastro.io/@rubberd"),
             InlineKeyboardButton("Pepeboost 🐸", url="https://t.me/pepeboost_sol07_bot?start=ref_01inkp")]
         ]
         return final_message, InlineKeyboardMarkup(keyboard)
