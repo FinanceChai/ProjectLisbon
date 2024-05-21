@@ -83,7 +83,7 @@ async def create_message(session, token_address):
         total_volume = token_metadata.get('volume_usdt', 0)
         market_cap = token_metadata.get('market_cap_fd', 1)
         volume_market_cap_ratio = total_volume / market_cap
-        volume_market_cap_ratio_str = "{:.2f}x".format(volume_market_cap_ratio)
+        volume_market_cap_ratio_str = "{:.2f}%".format(volume_market_cap_ratio*100)
 
         message_lines.append(
             f"<b>Token Name: {token_name}</b>\n\n"
