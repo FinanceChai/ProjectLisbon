@@ -57,7 +57,7 @@ async def fetch_token_metadata(session, token_address):
     return None
 
 async def create_message(session, token_address):
-    message_lines = ["📝 Token Information 🔮\n"]
+    message_lines = [""]
     token_metadata = await fetch_token_metadata(session, token_address)
     
     if not token_metadata:
@@ -86,7 +86,7 @@ async def create_message(session, token_address):
         volume_market_cap_ratio_str = "{:.2f}x".format(volume_market_cap_ratio)
 
         message_lines.append(
-            f"Token Name: {token_name}\n\n"
+            f"<b>Token Name: {token_name}</b>\n\n"
             f"<b><u>Token Overview</u></b>\n"
             f"🔣 Token Symbol: {token_symbol}\n"
             f"📈 Price (USDT): ${price_usdt}\n"
