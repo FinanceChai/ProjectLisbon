@@ -80,14 +80,19 @@ async def create_message(session, token_address):
 
         message_lines.append(
             f"Token Name: {token_name}\n\n"
+            f"Token Overview\n"
             f"🔣 Token Symbol: {token_symbol}\n"
             f"📈 Price (USDT): {price_usdt}\n"
             f"⛽ Volume (USDT): {volume_usdt}\n"
             f"🌛 Market Cap (FD): {market_cap_fd}\n\n"
+            f"Recent Market Activity\n"
             f"💹 Price Change (24h): {price_change_24h}\n"
             f"📊 Total Volume (24h): ${total_volume:,.0f}\n"
-            f"Volume / Market Cap: {volume_market_cap_ratio_str}\n\n"
-            f"<a href='https://solscan.io/token/{safely_quote(token_address)}'>Check Contract</a>\n"
+            f"🔍 Volume / Market Cap: {volume_market_cap_ratio_str}\n\n"
+            f"Risk Management\n"
+            f"<a href='https://solscan.io/token/{safely_quote(token_address)}'>Go to Contract Address</a>\n"
+            f"<a href='https://rugcheck.xyz/tokens/{safely_quote(transaction['token_address'])}'>RugCheck</a>\n"
+
         )
     
     final_message = '\n'.join(message_lines)
