@@ -91,7 +91,7 @@ async def create_message(session, token_address):
             f"🔍 Volume / Market Cap: {volume_market_cap_ratio_str}\n\n"
             f"Risk Management\n"
             f"<a href='https://solscan.io/token/{safely_quote(token_address)}'>Go to Contract Address</a>\n"
-            f"<a href='https://rugcheck.xyz/tokens/{safely_quote(transaction['token_address'])}'>RugCheck</a>\n"
+            f"<a href='https://rugcheck.xyz/tokens/{safely_quote('token_address')}'>RugCheck</a>\n"
 
         )
     
