@@ -100,11 +100,12 @@ async def create_message(session, token_address):
 
     if len(message_lines) > 1:
         keyboard = [
-            [InlineKeyboardButton("Trojan", url="https://t.me/solana_trojanbot?start=r-0xrubberd319503"),
-             InlineKeyboardButton("Photon", url="https://photon-sol.tinyastro.io/@rubberd")],
-            [InlineKeyboardButton("Bonkbot", url="https://t.me/bonkbot_bot?start=ref_al2no"),
-             InlineKeyboardButton("BananaGun", url="https://t.me/BANANAGUNSNIPER_BOT?START=REF_RUBBERD")]
+            [InlineKeyboardButton("Photon", url="https://photon-sol.tinyastro.io/@rubberd"),
+            InlineKeyboardButton("Pepeboost 🐸", url="https://t.me/pepeboost_sol07_bot?start=ref_01inkp")]
         ]
+        return final_message, InlineKeyboardMarkup(keyboard)
+    else:
+        return None, None
 
         reply_markup = InlineKeyboardMarkup(keyboard)
         return final_message, reply_markup
