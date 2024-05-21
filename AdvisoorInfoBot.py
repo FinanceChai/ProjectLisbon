@@ -7,13 +7,21 @@ from urllib.parse import quote as safely_quote
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 from telegram import Update
 
+# Load environment variables from .env file
 load_dotenv()
 
-TELEGRAM_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
+# Retrieve the environment variables
+TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
 CHAT_ID = os.getenv('CHAT_ID')
 SOLSCAN_API_KEY = os.getenv('SOLSCAN_API_KEY')
+
+# Check if the TELEGRAM_TOKEN is set
+if not TELEGRAM_TOKEN:
+    raise ValueError("TELEGRAM_TOKEN environment variable is not set")
+
 EXCLUDED_SYMBOLS = {"ETH", "BTC", "BONK", "Bonk"}  # Add or modify as necessary
 
+# Initialize the Telegram bot application
 application = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
 
 async def fetch_token_metadata(session, token_address):
@@ -117,6 +125,10 @@ async def create_message(session, token_address):
         return final_message, None
 
 async def handle_token_info(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if len(context.args) != 1:
+        await update.message.reply_text("Usage: /search [contract address]")
+        return
+
     token_address = context.args[0]
     async with aiohttp.ClientSession() as session:
         message, reply_markup = await create_message(session, token_address)
