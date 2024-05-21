@@ -15,6 +15,11 @@ TELEGRAM_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 CHAT_ID = os.getenv('CHAT_ID')
 SOLSCAN_API_KEY = os.getenv('SOLSCAN_API_KEY')
 
+# Debugging: Print environment variables to ensure they are loaded
+print(f"TELEGRAM_TOKEN: {TELEGRAM_TOKEN}")
+print(f"CHAT_ID: {CHAT_ID}")
+print(f"SOLSCAN_API_KEY: {SOLSCAN_API_KEY}")
+
 # Check if the TELEGRAM_TOKEN is set
 if not TELEGRAM_TOKEN:
     raise ValueError("TELEGRAM_TOKEN environment variable is not set")
@@ -143,3 +148,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
