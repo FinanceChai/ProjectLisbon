@@ -79,7 +79,7 @@ async def create_message(session, token_address):
         volume_market_cap_ratio_str = "{:.2f}x".format(volume_market_cap_ratio)
 
         message_lines.append(
-            f"Token Name: {token_name}\n\n"
+            f"<b>Token Name: {token_name}</b>\n\n"
             f"<u>Token Overview</u>\n\n"
             f"🔣 Token Symbol: {token_symbol}\n"
             f"📈 Price (USDT): {price_usdt}\n"
