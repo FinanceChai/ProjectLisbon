@@ -93,14 +93,19 @@ async def create_message(session, token_address):
         volume_market_cap_ratio = total_volume / market_cap
         volume_market_cap_ratio_str = "{:.2f}x".format(volume_market_cap_ratio)
 
+        liquidity_market_cap_ratio = (token_metadata.get('total_liquidity', 0) / market_cap) * 100
+        liquidity_market_cap_ratio_str = "{:.2f}%".format(liquidity_market_cap_ratio)
+
         message_lines.append(
             f"Token Name: {token_name}\n\n"
             f"<b><u>Token Overview</u></b>\n"
-            f"🔣 Symbol: {token_symbol}\n"
-            f"📈 Price: ${price_usdt}\n"
-            f"⛽ Volume: {volume_usdt}\n"
-            f"🌛 Market Cap: {market_cap_fd}\n"
-            f"💧 Total Liquidity: {total_liquidity}\n\n"
+            f"🔣 Token Symbol: {token_symbol}\n"
+            f"📈 Price (USDT): ${price_usdt}\n"
+            f"⛽ Volume (USDT): {volume_usdt}\n"
+            f"🌛 Market Cap (FD): {market_cap_fd}\n"
+            f"<b><u>Liquidity</u></b>\n"
+            f"💧 Liquidity: {total_liquidity}\n"
+            f"🔍 Liquidity / Market Cap: {liquidity_market_cap_ratio_str}\n\n"
             f"<b><u>Recent Market Activity</u></b>\n"
             f"💹 Price Change (24h): {price_change_24h_str}\n"
             f"📊 Total Volume (24h): ${total_volume:,.0f}\n"
