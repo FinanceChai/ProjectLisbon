@@ -4,8 +4,9 @@ import aiohttp
 from dotenv import load_dotenv
 from telegram import Bot, InlineKeyboardMarkup, InlineKeyboardButton
 from urllib.parse import quote as safely_quote
-from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, Updater
+from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 from telegram import Update
+from datetime import datetime, timedelta
 
 # Load environment variables from .env file
 load_dotenv()
@@ -14,6 +15,11 @@ load_dotenv()
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
 CHAT_ID = os.getenv('CHAT_ID')
 SOLSCAN_API_KEY = os.getenv('SOLSCAN_API_KEY')
+
+# Debugging: Print environment variables to ensure they are loaded correctly
+print(f"TELEGRAM_TOKEN: {TELEGRAM_TOKEN}")
+print(f"CHAT_ID: {CHAT_ID}")
+print(f"SOLSCAN_API_KEY: {SOLSCAN_API_KEY}")
 
 # Check if the TELEGRAM_TOKEN is set
 if not TELEGRAM_TOKEN:
@@ -25,7 +31,12 @@ EXCLUDED_SYMBOLS = {"ETH", "BTC", "BONK", "Bonk"}  # Add or modify as necessary
 application = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
 
 async def fetch_token_metadata(session, token_address):
-    url = f"https://pro-api.solscan.io/v1.0/market/token/{safely_quote(token_address)}?limit=10&offset=0"
+    now = datetime.utcnow()
+    one_hour_ago = now - timedelta(hours=1)
+    timestamp_now = int(now.timestamp())
+    timestamp_one_hour_ago = int(one_hour_ago.timestamp())
+
+    url = f"https://pro-api.solscan.io/v1.0/market/token/{safely_quote(token_address)}?limit=10&offset=0&startTime={timestamp_one_hour_ago}&endTime={timestamp_now}"
     headers = {'accept': '*/*', 'token': SOLSCAN_API_KEY}
     async with session.get(url, headers=headers) as response:
         if response.status == 200:
@@ -39,7 +50,7 @@ async def fetch_token_metadata(session, token_address):
                     'decimals': market.get('base', {}).get('decimals'),
                     'icon_url': market.get('base', {}).get('icon'),
                     'price_usdt': data.get('priceUsdt'),
-                    'volume_usdt': data.get('volumeUsdt'),
+                    'volume_usdt': sum(market.get('volume24h', 0) for market in data['markets'] if market.get('volume24h') is not None),  # Calculate the total volume over the last hour
                     'market_cap_fd': data.get('marketCapFD'),
                     'price_change_24h': data.get('priceChange24h')
                 }
@@ -52,7 +63,7 @@ async def fetch_token_metadata(session, token_address):
     return None
 
 async def create_message(session, token_address):
-    message_lines = [""]
+    message_lines = ["📝 Token Information 🔮\n"]
     token_metadata = await fetch_token_metadata(session, token_address)
     
     if not token_metadata:
@@ -78,21 +89,22 @@ async def create_message(session, token_address):
         total_volume = token_metadata.get('volume_usdt', 0)
         market_cap = token_metadata.get('market_cap_fd', 1)
         volume_market_cap_ratio = total_volume / market_cap
-        volume_market_cap_ratio_str = "{:.2f}%".format(volume_market_cap_ratio*100)
+        volume_market_cap_ratio_str = "{:.2f}x".format(volume_market_cap_ratio)
 
         message_lines.append(
-            f"<b>Token Name: {token_name}</b>\n\n"
+            f"<b>Token Name: {token_name}</u>\n\n"
             f"<b><u>Token Overview</u></b>\n"
-            f"🔣 Token Symbol: {token_symbol}\n"
+            f"🔣 Symbol: {token_symbol}\n"
             f"📈 Price: ${price_usdt}\n"
-            f"🌛 Mkt Cap: {market_cap_fd}\n\n"
+            f"⛽ Volume: {volume_usdt}\n"
+            f"🌛 Market Cap: {market_cap_fd}\n\n"
             f"<b><u>Recent Market Activity</u></b>\n"
             f"💹 Price Change (24h): {price_change_24h_str}\n"
-            f"📊 Total Volume (24h): ${total_volume:,.0f}\n"
+            f"📊 Total Volume (1h): ${total_volume:,.0f}\n"
             f"🔍 Volume / Market Cap: {volume_market_cap_ratio_str}\n\n"
             f"<b><u>Risk Management</u></b>\n"
-            f"--- <a href='https://solscan.io/token/{safely_quote(token_address)}'>Contract Address</a>\n"
-            f"--- <a href='https://rugcheck.xyz/tokens/{safely_quote(token_address)}'>RugCheck</a>\n"
+            f"<a href='https://solscan.io/token/{safely_quote(token_address)}'>Go to Contract Address</a>\n"
+            f"<a href='https://rugcheck.xyz/tokens/{safely_quote(token_address)}'>RugCheck</a>\n"
         )
     
     final_message = '\n'.join(message_lines)
