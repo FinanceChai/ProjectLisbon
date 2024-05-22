@@ -11,11 +11,6 @@ from datetime import datetime, timedelta
 # Load environment variables from .env file
 load_dotenv()
 
-# Retrieve the environment variables
-TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
-CHAT_ID = os.getenv('CHAT_ID')
-SOLSCAN_API_KEY = os.getenv('SOLSCAN_API_KEY')
-
 # Debugging: Print environment variables to ensure they are loaded correctly
 print(f"TELEGRAM_TOKEN: {TELEGRAM_TOKEN}")
 print(f"CHAT_ID: {CHAT_ID}")
@@ -99,13 +94,13 @@ async def create_message(session, token_address):
         message_lines.append(
             f"Token Name: {token_name}\n\n"
             f"<b><u>Token Overview</u></b>\n"
-            f"🔣 Token Symbol: {token_symbol}\n"
-            f"📈 Price (USDT): ${price_usdt}\n"
-            f"⛽ Volume (USDT): {volume_usdt}\n"
-            f"🌛 Market Cap (FD): {market_cap_fd}\n"
+            f"🔣 Symbol: {token_symbol}\n"
+            f"📈 Price: ${price_usdt}\n"
+            f"⛽ Volume: {volume_usdt}\n"
+            f"🌛 Market Cap: {market_cap_fd}\n"
             f"<b><u>Liquidity</u></b>\n"
-            f"💧 Liquidity: {total_liquidity}\n"
-            f"🔍 Liquidity / Market Cap: {liquidity_market_cap_ratio_str}\n\n"
+            f"💧 DEX Liquidity: {total_liquidity}\n"
+            f"🔍 DEX Liquidity / Market Cap: {liquidity_market_cap_ratio_str}\n\n"
             f"<b><u>Recent Market Activity</u></b>\n"
             f"💹 Price Change (24h): {price_change_24h_str}\n"
             f"📊 Total Volume (24h): ${total_volume:,.0f}\n"
