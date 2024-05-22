@@ -11,10 +11,10 @@ from datetime import datetime, timedelta
 # Load environment variables from .env file
 load_dotenv()
 
-# Debugging: Print environment variables to ensure they are loaded correctly
-print(f"TELEGRAM_TOKEN: {TELEGRAM_TOKEN}")
-print(f"CHAT_ID: {CHAT_ID}")
-print(f"SOLSCAN_API_KEY: {SOLSCAN_API_KEY}")
+# Retrieve the environment variables
+TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
+CHAT_ID = os.getenv('CHAT_ID')
+SOLSCAN_API_KEY = os.getenv('SOLSCAN_API_KEY')
 
 # Check if the TELEGRAM_TOKEN is set
 if not TELEGRAM_TOKEN:
