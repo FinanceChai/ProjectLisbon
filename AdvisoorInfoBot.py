@@ -97,7 +97,7 @@ async def create_message(session, token_address):
             f"🔣 Symbol: {token_symbol}\n"
             f"📈 Price: ${price_usdt}\n"
             f"⛽ Volume: {volume_usdt}\n"
-            f"🌛 Market Cap: {market_cap_fd}\n"
+            f"🌛 Market Cap: {market_cap_fd}\n\n"
             f"<b><u>Liquidity</u></b>\n"
             f"💧 DEX Liquidity: {total_liquidity}\n"
             f"🔍 DEX Liquidity / Market Cap: {liquidity_market_cap_ratio_str}\n\n"
