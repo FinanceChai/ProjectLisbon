@@ -6,7 +6,7 @@ from telegram import Bot, InlineKeyboardMarkup, InlineKeyboardButton
 from urllib.parse import quote as safely_quote
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 from telegram import Update
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 # Load environment variables from .env file
 load_dotenv()
@@ -26,7 +26,7 @@ EXCLUDED_SYMBOLS = {"ETH", "BTC", "BONK", "Bonk"}  # Add or modify as necessary
 application = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
 
 async def fetch_token_metadata(session, token_address):
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     one_hour_ago = now - timedelta(hours=1)
     timestamp_now = int(now.timestamp())
     timestamp_one_hour_ago = int(one_hour_ago.timestamp())
@@ -58,6 +58,20 @@ async def fetch_token_metadata(session, token_address):
             print(f"Failed to fetch metadata, status code: {response.status}")
     return None
 
+async def fetch_top_holders(session, token_address):
+    url = f"https://pro-api.solscan.io/v1.0/token/holders?tokenAddress={safely_quote(token_address)}&limit=10&offset=0&fromAmount=0"
+    headers = {'accept': '*/*', 'token': SOLSCAN_API_KEY}
+    async with session.get(url, headers=headers) as response:
+        if response.status == 200:
+            data = await response.json()
+            if 'data' in data:
+                return data['data']
+            else:
+                print(f"No holder data available for token: {token_address}")
+        else:
+            print(f"Failed to fetch holders, status code: {response.status}")
+    return []
+
 async def create_message(session, token_address):
     message_lines = [""]
     token_metadata = await fetch_token_metadata(session, token_address)
@@ -72,7 +86,7 @@ async def create_message(session, token_address):
         token_name = token_metadata.get('token_name', 'Unknown')
         price_usdt = token_metadata.get('price_usdt', 'N/A')
         volume_usdt = "${:,.0f}".format(token_metadata.get('volume_usdt', 0))
-        market_cap_fd = "${:,.0f}".format(token_metadata.get('market_cap_fd', 0))
+        market_cap_fd = "${:,.0f}".format(token_metadata.get('market_cap_fd', 0) or 0)
         total_liquidity = "${:,.0f}".format(token_metadata.get('total_liquidity', 0))
 
         if price_usdt != 'N/A' and token_metadata.get('price_change_24h') is not None:
@@ -84,7 +98,7 @@ async def create_message(session, token_address):
             price_change_24h_str = "N/A"
 
         total_volume = token_metadata.get('volume_usdt', 0)
-        market_cap = token_metadata.get('market_cap_fd', 1)
+        market_cap = token_metadata.get('market_cap_fd', 1) or 1
         volume_market_cap_ratio = total_volume / market_cap
         volume_market_cap_ratio_str = "{:.2f}x".format(volume_market_cap_ratio)
 
@@ -96,8 +110,20 @@ async def create_message(session, token_address):
             f"<b><u>Token Overview</u></b>\n"
             f"🔣 Symbol: {token_symbol}\n"
             f"📈 Price: ${price_usdt}\n"
-            f"🌛 Market Cap: {market_cap_fd}\n\n"
-            f"<b><u>Liquidity</u></b>\n"
+            f"🌛 Market Cap: {market_cap_fd}\n"
+        )
+
+        # Fetch and append top holders
+        top_holders = await fetch_top_holders(session, token_address)
+        if top_holders:
+            message_lines.append(f"\n<b><u>Top 10 Holders</u></b>\n")
+            for holder in top_holders:
+                address = holder.get('address')
+                amount = holder.get('amount') / (10 ** holder.get('decimals'))
+                message_lines.append(f"🏦 Address: {address}\nAmount: {amount:,.0f}\n")
+
+        message_lines.append(
+            f"\n<b><u>Liquidity</u></b>\n"
             f"💧 DEX Liquidity: {total_liquidity}\n"
             f"🔍 DEX Liquidity / Market Cap: {liquidity_market_cap_ratio_str}\n\n"
             f"<b><u>Market Activity</u></b>\n"
