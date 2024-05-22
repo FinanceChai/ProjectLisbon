@@ -59,7 +59,7 @@ async def fetch_token_metadata(session, token_address):
     return None
 
 async def create_message(session, token_address):
-    message_lines = ["📝 Token Information 🔮\n"]
+    message_lines = [""]
     token_metadata = await fetch_token_metadata(session, token_address)
     
     if not token_metadata:
