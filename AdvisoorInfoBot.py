@@ -91,8 +91,8 @@ async def create_message(session, token_address):
             f"📊 Total Volume (24h): ${total_volume:,.0f}\n"
             f"🔍 Volume / Market Cap: {volume_market_cap_ratio_str}\n\n"
             f"<b><u>Risk Management</u></b>\n"
-            f"<a href='https://solscan.io/token/{safely_quote(token_address)}'>Contract Address</a>\n"
-            f"<a href='https://rugcheck.xyz/tokens/{safely_quote(token_address)}'>RugCheck</a>\n"
+            f"--<a href='https://solscan.io/token/{safely_quote(token_address)}'>Contract Address</a>\n"
+            f"--<a href='https://rugcheck.xyz/tokens/{safely_quote(token_address)}'>RugCheck</a>\n"
         )
     
     final_message = '\n'.join(message_lines)
