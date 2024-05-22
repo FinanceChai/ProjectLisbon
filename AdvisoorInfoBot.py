@@ -52,6 +52,7 @@ async def fetch_token_metadata(session, token_address):
                     'price_usdt': data.get('priceUsdt'),
                     'volume_usdt': sum(market.get('volume24h', 0) for market in data['markets'] if market.get('volume24h') is not None),  # Calculate the total volume over the last hour
                     'market_cap_fd': data.get('marketCapFD'),
+                    'total_liquidity': sum(market.get('liquidity', 0) for market in data['markets'] if market.get('liquidity') is not None),  # Calculate the total liquidity
                     'price_change_24h': data.get('priceChange24h')
                 }
 
@@ -77,6 +78,7 @@ async def create_message(session, token_address):
         price_usdt = token_metadata.get('price_usdt', 'N/A')
         volume_usdt = "${:,.0f}".format(token_metadata.get('volume_usdt', 0))
         market_cap_fd = "${:,.0f}".format(token_metadata.get('market_cap_fd', 0))
+        total_liquidity = "${:,.0f}".format(token_metadata.get('total_liquidity', 0))
 
         if price_usdt != 'N/A' and token_metadata.get('price_change_24h') is not None:
             price_usdt = float(price_usdt)
@@ -92,15 +94,16 @@ async def create_message(session, token_address):
         volume_market_cap_ratio_str = "{:.2f}x".format(volume_market_cap_ratio)
 
         message_lines.append(
-            f"<b>Token Name: {token_name}</u>\n\n"
+            f"Token Name: {token_name}\n\n"
             f"<b><u>Token Overview</u></b>\n"
             f"🔣 Symbol: {token_symbol}\n"
             f"📈 Price: ${price_usdt}\n"
             f"⛽ Volume: {volume_usdt}\n"
-            f"🌛 Market Cap: {market_cap_fd}\n\n"
+            f"🌛 Market Cap: {market_cap_fd}\n"
+            f"💧 Total Liquidity: {total_liquidity}\n\n"
             f"<b><u>Recent Market Activity</u></b>\n"
             f"💹 Price Change (24h): {price_change_24h_str}\n"
-            f"📊 Total Volume (1h): ${total_volume:,.0f}\n"
+            f"📊 Total Volume (24h): ${total_volume:,.0f}\n"
             f"🔍 Volume / Market Cap: {volume_market_cap_ratio_str}\n\n"
             f"<b><u>Risk Management</u></b>\n"
             f"<a href='https://solscan.io/token/{safely_quote(token_address)}'>Go to Contract Address</a>\n"
