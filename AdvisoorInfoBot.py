@@ -131,14 +131,23 @@ async def create_message(session, token_address):
         top_holders = await fetch_top_holders(session, token_address)
         if top_holders:
             top_holder_percentages = []
-            for holder in top_holders:
+            top_5_sum = 0
+            top_10_sum = 0
+
+            for i, holder in enumerate(top_holders):
                 amount = holder.get('amount') / (10 ** token_metadata.get('decimals', 0))
                 percentage = (amount / total_supply) * 100
                 top_holder_percentages.append(f"{percentage:.2f}%")
+                if i < 5:
+                    top_5_sum += percentage
+                top_10_sum += percentage
+
             top_holder_percentages_str = " | ".join(top_holder_percentages)
+            top_sums_str = f"Top 5: {top_5_sum:.2f}% | Top 10: {top_10_sum:.2f}%"
 
             message_lines.append(f"\n<b><u>Top 10 Holders Distribution</u></b>\n")
             message_lines.append(top_holder_percentages_str)
+            message_lines.append(f"\n{top_sums_str}\n")
 
         message_lines.append(
             f"\n<b><u>Liquidity</u></b>\n"
