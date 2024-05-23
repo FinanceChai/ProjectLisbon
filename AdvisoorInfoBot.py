@@ -44,7 +44,7 @@ async def fetch_token_metadata(session, token_address):
                 market = market_data['markets'][0]  # Assuming you want the first market listed
 
                 decimals = meta_data.get('decimals', 0)
-                total_supply_raw = int(meta_data.get('supply', 0))
+                total_supply_raw = int(meta_data.get('supply', '0'))
                 total_supply = total_supply_raw / (10 ** decimals) if decimals else total_supply_raw
 
                 result = {
@@ -54,7 +54,7 @@ async def fetch_token_metadata(session, token_address):
                     'icon_url': meta_data.get('icon'),
                     'price_usdt': meta_data.get('price', 'N/A'),
                     'volume_usdt': sum(market.get('volume24h', 0) for market in market_data['markets'] if market.get('volume24h') is not None),  # Calculate the total volume over the last hour
-                    'market_cap_fd': market_data.get('marketCapFD'),
+                    'market_cap_fd': meta_data.get('marketCapFD', 0),  # Adjusted to get the market cap correctly
                     'total_liquidity': sum(market.get('liquidity', 0) for market in market_data['markets'] if market.get('liquidity') is not None),  # Calculate the total liquidity
                     'price_change_24h': market_data.get('priceChange24h'),
                     'total_supply': total_supply,
@@ -96,10 +96,10 @@ async def create_message(session, token_address):
         token_name = token_metadata.get('token_name', 'Unknown')
         price_usdt = token_metadata.get('price_usdt', 'N/A')
         volume_usdt = "${:,.0f}".format(token_metadata.get('volume_usdt', 0))
-        market_cap_fd = "${:,.0f}".format(token_metadata.get('market_cap_fd', 0) or 0)
+        market_cap_fd = "${:,.0f}".format(token_metadata.get('market_cap_fd', 0))
         total_liquidity = "${:,.0f}".format(token_metadata.get('total_liquidity', 0))
         total_supply = token_metadata.get('total_supply', 0)  # Retrieve total token supply
-        num_holders = token_metadata.get('holders', 'N/A')  # Retrieve number of token holders
+        num_holders = token_metadata.get('num_holders', 'N/A')  # Retrieve number of token holders
 
         if price_usdt != 'N/A' and token_metadata.get('price_change_24h') is not None:
             price_usdt = float(price_usdt)
