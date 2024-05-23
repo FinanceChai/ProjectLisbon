@@ -59,7 +59,11 @@ async def fetch_token_metadata(session, token_address):
                     'price_change_24h': market_data.get('priceChange24h'),
                     'total_supply': total_supply,
                     'num_holders': market_data.get('numHolders', 'N/A'),  # Placeholder, replace with actual source if available
-                    'token_authority': meta_data.get('tokenAuthority')  # Get token authority
+                    'token_authority': meta_data.get('tokenAuthority'),  # Get token authority
+                    'website': meta_data.get('website'),
+                    'twitter': meta_data.get('twitter'),
+                    'tag': meta_data.get('tag'),
+                    'coingeckoId': meta_data.get('coingeckoId')
                 }
 
                 return result
@@ -103,6 +107,10 @@ async def create_message(session, token_address):
         num_holders = token_metadata.get('holders', 'N/A')  # Retrieve number of token holders
         token_authority = token_metadata.get('token_authority')
         token_authority_str = "🟢" if token_authority is None else "🔴"
+        website = token_metadata.get('website')
+        twitter = token_metadata.get('twitter')
+        tag = token_metadata.get('tag')
+        coingeckoId = token_metadata.get('coingeckoId')
 
         if price_usdt != 'N/A' and token_metadata.get('price_change_24h') is not None:
             price_usdt = float(price_usdt)
@@ -129,6 +137,15 @@ async def create_message(session, token_address):
             f"🪙 Total Supply: {total_supply:,.0f}\n"
             f"📍 Token Authority: {token_authority_str}"
         )
+
+        if website:
+            message_lines.append(f"🌐 Website: <a href='{website}'>{website}</a>")
+        if twitter:
+            message_lines.append(f"🐦 Twitter: <a href='https://twitter.com/{twitter}'>@{twitter}</a>")
+        if tag:
+            message_lines.append(f"🏷️ Tag: {tag}")
+        if coingeckoId:
+            message_lines.append(f"🦎 CoinGecko ID: {coingeckoId}")
 
         # Fetch and calculate top holders' percentage ownership
         top_holders = await fetch_top_holders(session, token_address)
