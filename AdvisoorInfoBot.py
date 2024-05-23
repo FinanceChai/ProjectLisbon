@@ -4,7 +4,7 @@ import logging
 from dotenv import load_dotenv
 from telegram import Bot, InlineKeyboardMarkup, InlineKeyboardButton, Update
 from urllib.parse import quote as safely_quote
-from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, CallbackContext
+from telegram.ext import ApplicationBuilder, CommandHandler, CallbackContext
 from datetime import datetime, timedelta, timezone
 
 # Configure logging
@@ -253,7 +253,7 @@ def main():
     logger.debug("Starting bot with webhook")
     application.add_handler(CommandHandler("search", handle_token_info))
     application.run_webhook(listen="0.0.0.0",
-                            port=int(os.getenv('PORT', '8443')),
+                            port=int(os.getenv('PORT', '8444')),  # Changed port to 8444
                             url_path=TELEGRAM_TOKEN,
                             webhook_url=f"{WEBHOOK_URL}/{TELEGRAM_TOKEN}")
     logger.debug(f"Webhook URL: {WEBHOOK_URL}/{TELEGRAM_TOKEN}")
