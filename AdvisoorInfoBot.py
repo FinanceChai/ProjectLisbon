@@ -44,7 +44,7 @@ async def fetch_token_metadata(session, token_address):
                 market = market_data['markets'][0]  # Assuming you want the first market listed
 
                 decimals = meta_data.get('decimals', 0)
-                total_supply_raw = int(meta_data.get('supply', 0))
+                total_supply_raw = int(meta_data.get('supply', {}).get('total', 0))
                 total_supply = total_supply_raw / (10 ** decimals) if decimals else total_supply_raw
 
                 result = {
