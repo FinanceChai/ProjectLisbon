@@ -144,20 +144,19 @@ async def create_message(session, token_address):
             top_holder_percentages_str = " | ".join(top_holder_percentages)
             top_sums_str = f"Top 5: {top_5_sum:.2f}% | Top 10: {top_10_sum:.2f}%"
 
-            message_lines.append(f"\n<b><u>Top 10 Holders Distribution</u></b>\n")
-            message_lines.append(f"👥 Number of Holders: {num_holders}\n")
+            message_lines.append(f"\n<b>Holder Distribution</b>\n")
             message_lines.append(f"Top 10:\n{top_holder_percentages_str}")
             message_lines.append(f"\n{top_sums_str}\n")
 
         message_lines.append(
-            f"\n<b><u>Liquidity</u></b>\n"
+            f"\n<b>Liquidity</b>\n"
             f"💧 DEX Liquidity: {total_liquidity}\n"
             f"🔍 DEX Liquidity / Market Cap: {liquidity_market_cap_ratio_str}\n\n"
-            f"<b><u>Market Activity</u></b>\n"
+            f"<b>Market Activity</b>\n"
             f"💹 Price Change (24h): {price_change_24h_str}\n"
             f"📊 Total Volume (24h): ${total_volume:,.0f}\n"
             f"🔍 Volume / Market Cap: {volume_market_cap_ratio_str}\n\n"
-            f"<b><u>Risk Management</u></b>\n"
+            f"<b>Risk Management</b>\n"
             f"--<a href='https://solscan.io/token/{safely_quote(token_address)}'>Contract Address</a>\n"
             f"--<a href='https://rugcheck.xyz/tokens/{safely_quote(token_address)}'>RugCheck</a>\n"
         )
