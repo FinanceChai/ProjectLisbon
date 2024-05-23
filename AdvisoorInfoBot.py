@@ -123,7 +123,7 @@ async def create_message(session, token_address):
             f"🔣 Symbol: {token_symbol}\n"
             f"📈 Price: ${price_usdt}\n"
             f"🌛 Market Cap: {market_cap_fd}\n"
-            f"🪙 Total Supply: {total_supply:,.0f}\n"
+            f"🪙 Total Supply: {total_supply:,.0f}"
         )
 
         # Fetch and calculate top holders' percentage ownership
