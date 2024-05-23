@@ -33,24 +33,19 @@ async def fetch_token_metadata(session, token_address):
 
     market_url = f"https://pro-api.solscan.io/v1.0/market/token/{safely_quote(token_address)}?limit=10&offset=0&startTime={timestamp_one_hour_ago}&endTime={timestamp_now}"
     meta_url = f"https://pro-api.solscan.io/v1.0/token/meta?tokenAddress={safely_quote(token_address)}"
-    token_list_url = f"https://pro-api.solscan.io/v1.0/token/list?sortBy=market_cap&direction=desc&limit=10&offset=0"
     headers = {'accept': '*/*', 'token': SOLSCAN_API_KEY}
     
-    async with session.get(market_url, headers=headers) as market_response, session.get(meta_url, headers=headers) as meta_response, session.get(token_list_url, headers=headers) as token_list_response:
-        if market_response.status == 200 and meta_response.status == 200 and token_list_response.status == 200:
+    async with session.get(market_url, headers=headers) as market_response, session.get(meta_url, headers=headers) as meta_response:
+        if market_response.status == 200 and meta_response.status == 200:
             market_data = await market_response.json()
             meta_data = await meta_response.json()
-            token_list_data = await token_list_response.json()
 
             if 'markets' in market_data and market_data['markets']:
                 market = market_data['markets'][0]  # Assuming you want the first market listed
 
                 decimals = meta_data.get('decimals', 0)
-                supply_data = meta_data.get('supply', '0')
-                total_supply_raw = int(supply_data) if isinstance(supply_data, str) else int(supply_data.get('total', 0))
+                total_supply_raw = int(meta_data.get('supply', 0))
                 total_supply = total_supply_raw / (10 ** decimals) if decimals else total_supply_raw
-
-                num_holders = next((item['holder'] for item in token_list_data['data'] if item['mintAddress'] == token_address), 'N/A')
 
                 result = {
                     'token_symbol': meta_data.get('symbol', 'Unknown'),
@@ -59,18 +54,18 @@ async def fetch_token_metadata(session, token_address):
                     'icon_url': meta_data.get('icon'),
                     'price_usdt': meta_data.get('price', 'N/A'),
                     'volume_usdt': sum(market.get('volume24h', 0) for market in market_data['markets'] if market.get('volume24h') is not None),  # Calculate the total volume over the last hour
-                    'market_cap_fd': meta_data.get('marketCapFD', 0),
+                    'market_cap_fd': market_data.get('marketCapFD'),
                     'total_liquidity': sum(market.get('liquidity', 0) for market in market_data['markets'] if market.get('liquidity') is not None),  # Calculate the total liquidity
                     'price_change_24h': market_data.get('priceChange24h'),
                     'total_supply': total_supply,
-                    'num_holders': num_holders  # Get number of token holders
+                    'num_holders': market_data.get('numHolders', 'N/A')  # Placeholder, replace with actual source if available
                 }
 
                 return result
             else:
                 print(f"No market data available for token: {token_address}")
         else:
-            print(f"Failed to fetch metadata, status code: {market_response.status}, {meta_response.status}, and {token_list_response.status}")
+            print(f"Failed to fetch metadata, status code: {market_response.status} and {meta_response.status}")
     return None
 
 async def fetch_top_holders(session, token_address):
@@ -101,10 +96,10 @@ async def create_message(session, token_address):
         token_name = token_metadata.get('token_name', 'Unknown')
         price_usdt = token_metadata.get('price_usdt', 'N/A')
         volume_usdt = "${:,.0f}".format(token_metadata.get('volume_usdt', 0))
-        market_cap_fd = "${:,.0f}".format(token_metadata.get('market_cap_fd', 0))
+        market_cap_fd = "${:,.0f}".format(token_metadata.get('market_cap_fd', 0) or 0)
         total_liquidity = "${:,.0f}".format(token_metadata.get('total_liquidity', 0))
         total_supply = token_metadata.get('total_supply', 0)  # Retrieve total token supply
-        num_holders = token_metadata.get('num_holders', 'N/A')  # Retrieve number of token holders
+        num_holders = token_metadata.get('holders', 'N/A')  # Retrieve number of token holders
 
         if price_usdt != 'N/A' and token_metadata.get('price_change_24h') is not None:
             price_usdt = float(price_usdt)
@@ -147,22 +142,22 @@ async def create_message(session, token_address):
                 top_10_sum += percentage
 
             top_holder_percentages_str = " | ".join(top_holder_percentages)
-            top_sums_str = f"Top 5: {top_5_sum:.2f}% | Top 10: {top_10_sum:.2f}%"
+            top_sums_str = f"Σ Top 5: {top_5_sum:.2f}% | Σ Top 10: {top_10_sum:.2f}%"
 
-            message_lines.append(f"\n<b><u>Top 10 Holders Distribution</u></b>\n")
-            message_lines.append(f"👥 Number of Holders: {num_holders}\n")
-            message_lines.append(f"Top 10:\n{top_holder_percentages_str}")
-            message_lines.append(f"\n{top_sums_str}\n")
+            message_lines.append(f"\n<b>Holder Distribution</b>\n")
+            message_lines.append(f"Top10 Distro:\n{top_holder_percentages_str}")
+            message_lines.append(f"{top_sums_str}\n")
 
         message_lines.append(
-            f"\n<b><u>Liquidity</u></b>\n"
+            f"\n<b>Liquidity</b>\n"
             f"💧 DEX Liquidity: {total_liquidity}\n"
             f"🔍 DEX Liquidity / Market Cap: {liquidity_market_cap_ratio_str}\n\n"
-            f"<b><u>Market Activity</u></b>\n"
-            f"💹 Price Change 24h: {price_change_24h_str}\n"
-            f"📊 Volume / Market Cap: {volume_market_cap_ratio_str}\n"
-            f"🔄 Volume (24h): {volume_usdt}\n\n"
-            f"<a href='https://solscan.io/token/{safely_quote(token_address)}'>Contract Address</a>\n"
+            f"<b>Market Activity</b>\n"
+            f"💹 Price Change (24h): {price_change_24h_str}\n"
+            f"📊 Total Volume (24h): ${total_volume:,.0f}\n"
+            f"🔍 Volume / Market Cap: {volume_market_cap_ratio_str}\n\n"
+            f"<b>Risk Management</b>\n"
+            f"--<a href='https://solscan.io/token/{safely_quote(token_address)}'>Contract Address</a>\n"
             f"--<a href='https://rugcheck.xyz/tokens/{safely_quote(token_address)}'>RugCheck</a>\n"
         )
     
