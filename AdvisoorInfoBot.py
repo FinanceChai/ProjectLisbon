@@ -48,7 +48,9 @@ async def fetch_token_metadata(session, token_address):
                     'volume_usdt': sum(market.get('volume24h', 0) for market in data['markets'] if market.get('volume24h') is not None),  # Calculate the total volume over the last hour
                     'market_cap_fd': data.get('marketCapFD'),
                     'total_liquidity': sum(market.get('liquidity', 0) for market in data['markets'] if market.get('liquidity') is not None),  # Calculate the total liquidity
-                    'price_change_24h': data.get('priceChange24h')
+                    'price_change_24h': data.get('priceChange24h'),
+                    'total_supply': data.get('totalSupply'),  # Fetch total token supply
+                    'num_holders': data.get('numHolders')  # Fetch number of token holders
                 }
 
                 return result
@@ -88,6 +90,8 @@ async def create_message(session, token_address):
         volume_usdt = "${:,.0f}".format(token_metadata.get('volume_usdt', 0))
         market_cap_fd = "${:,.0f}".format(token_metadata.get('market_cap_fd', 0) or 0)
         total_liquidity = "${:,.0f}".format(token_metadata.get('total_liquidity', 0))
+        total_supply = token_metadata.get('total_supply', 'N/A')  # Retrieve total token supply
+        num_holders = token_metadata.get('num_holders', 'N/A')  # Retrieve number of token holders
 
         if price_usdt != 'N/A' and token_metadata.get('price_change_24h') is not None:
             price_usdt = float(price_usdt)
@@ -111,6 +115,8 @@ async def create_message(session, token_address):
             f"🔣 Symbol: {token_symbol}\n"
             f"📈 Price: ${price_usdt}\n"
             f"🌛 Market Cap: {market_cap_fd}\n"
+            f"🪙 Total Supply: {total_supply}\n"
+            f"👥 Number of Holders: {num_holders}\n"
         )
 
         # Fetch and append top holders
