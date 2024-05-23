@@ -1,10 +1,9 @@
 import os
-import asyncio
 import aiohttp
 from dotenv import load_dotenv
 from telegram import Bot, InlineKeyboardMarkup, InlineKeyboardButton, Update
 from urllib.parse import quote as safely_quote
-from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
+from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, CallbackContext
 from datetime import datetime, timedelta, timezone
 
 # Load environment variables from .env file
@@ -13,6 +12,7 @@ load_dotenv()
 # Retrieve the environment variables
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
 SOLSCAN_API_KEY = os.getenv('SOLSCAN_API_KEY')
+WEBHOOK_URL = os.getenv('WEBHOOK_URL')  # The URL where Telegram will send updates
 
 # Check if the TELEGRAM_TOKEN is set
 if not TELEGRAM_TOKEN:
@@ -215,7 +215,7 @@ async def create_message(session, token_address):
     else:
         return final_message, None
 
-async def handle_token_info(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def handle_token_info(update: Update, context: CallbackContext):
     if len(context.args) != 1:
         await update.message.reply_text("Usage: /search [contract address]")
         return
@@ -230,7 +230,11 @@ async def handle_token_info(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 def main():
     application.add_handler(CommandHandler("search", handle_token_info))
-    application.run_polling()
+    application.run_webhook(listen="0.0.0.0",
+                            port=int(os.getenv('PORT', '8443')),
+                            url_path=TELEGRAM_TOKEN,
+                            webhook_url=f"{WEBHOOK_URL}/{TELEGRAM_TOKEN}")
 
 if __name__ == "__main__":
     main()
+
