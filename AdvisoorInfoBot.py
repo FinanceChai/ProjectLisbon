@@ -58,7 +58,7 @@ async def fetch_token_metadata(session, token_address):
                     'total_liquidity': sum(market.get('liquidity', 0) for market in market_data['markets'] if market.get('liquidity') is not None),  # Calculate the total liquidity
                     'price_change_24h': market_data.get('priceChange24h'),
                     'total_supply': total_supply,
-                    'num_holders': market_data.get('numHolders', 'N/A')  # Placeholder, replace with actual source if available
+                    'num_holders': meta_data.get('holder', 'N/A')  # Get number of token holders
                 }
 
                 return result
