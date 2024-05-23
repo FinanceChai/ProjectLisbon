@@ -99,7 +99,7 @@ async def create_message(session, token_address):
         market_cap_fd = "${:,.0f}".format(token_metadata.get('market_cap_fd', 0) or 0)
         total_liquidity = "${:,.0f}".format(token_metadata.get('total_liquidity', 0))
         total_supply = token_metadata.get('total_supply', 0)  # Retrieve total token supply
-        num_holders = token_metadata.get('num_holders', 'N/A')  # Retrieve number of token holders
+        num_holders = token_metadata.get('holders', 'N/A')  # Retrieve number of token holders
 
         if price_usdt != 'N/A' and token_metadata.get('price_change_24h') is not None:
             price_usdt = float(price_usdt)
