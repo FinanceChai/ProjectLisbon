@@ -98,7 +98,7 @@ async def create_message(session, token_address):
         volume_usdt = "${:,.0f}".format(token_metadata.get('volume_usdt', 0))
         market_cap_fd = "${:,.0f}".format(token_metadata.get('market_cap_fd', 0) or 0)
         total_liquidity = "${:,.0f}".format(token_metadata.get('total_liquidity', 0))
-        total_supply = "{:,.0f}".format(token_metadata.get('total_supply', 0))  # Format total token supply
+        total_supply = token_metadata.get('total_supply', 0)  # Retrieve total token supply
         num_holders = token_metadata.get('num_holders', 'N/A')  # Retrieve number of token holders
 
         if price_usdt != 'N/A' and token_metadata.get('price_change_24h') is not None:
@@ -123,18 +123,22 @@ async def create_message(session, token_address):
             f"🔣 Symbol: {token_symbol}\n"
             f"📈 Price: ${price_usdt}\n"
             f"🌛 Market Cap: {market_cap_fd}\n"
-            f"🪙 Total Supply: {total_supply}\n"
+            f"🪙 Total Supply: {total_supply:,.0f}\n"
             f"👥 Number of Holders: {num_holders}\n"
         )
 
-        # Fetch and append top holders
+        # Fetch and calculate top holders' percentage ownership
         top_holders = await fetch_top_holders(session, token_address)
         if top_holders:
-            message_lines.append(f"\n<b><u>Top 10 Holders</u></b>\n")
+            top_holder_percentages = []
             for holder in top_holders:
-                address = holder.get('address')
-                amount = holder.get('amount') / (10 ** holder.get('decimals'))
-                message_lines.append(f"🏦 Address: {address}\nAmount: {amount:,.0f}\n")
+                amount = holder.get('amount') / (10 ** token_metadata.get('decimals', 0))
+                percentage = (amount / total_supply) * 100
+                top_holder_percentages.append(f"{percentage:.2f}%")
+            top_holder_percentages_str = " | ".join(top_holder_percentages)
+
+            message_lines.append(f"\n<b><u>Top 10 Holders Distribution</u></b>\n")
+            message_lines.append(top_holder_percentages_str)
 
         message_lines.append(
             f"\n<b><u>Liquidity</u></b>\n"
