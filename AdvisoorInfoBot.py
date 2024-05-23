@@ -4,7 +4,7 @@ import logging
 from dotenv import load_dotenv
 from telegram import Bot, InlineKeyboardMarkup, InlineKeyboardButton, Update
 from urllib.parse import quote as safely_quote
-from telegram.ext import ApplicationBuilder, CommandHandler, CallbackContext, MessageHandler, Filters
+from telegram.ext import ApplicationBuilder, CommandHandler, CallbackContext, MessageHandler, filters
 from datetime import datetime, timedelta, timezone
 
 # Configure logging
