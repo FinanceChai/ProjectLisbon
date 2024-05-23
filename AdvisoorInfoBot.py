@@ -44,7 +44,7 @@ async def fetch_token_metadata(session, token_address):
                 market = market_data['markets'][0]  # Assuming you want the first market listed
 
                 decimals = meta_data.get('decimals', 0)
-                total_supply_raw = int(meta_data.get('supply', {}).get('total', 0))
+                total_supply_raw = int(meta_data.get('supply', 0))
                 total_supply = total_supply_raw / (10 ** decimals) if decimals else total_supply_raw
 
                 result = {
@@ -58,7 +58,7 @@ async def fetch_token_metadata(session, token_address):
                     'total_liquidity': sum(market.get('liquidity', 0) for market in market_data['markets'] if market.get('liquidity') is not None),  # Calculate the total liquidity
                     'price_change_24h': market_data.get('priceChange24h'),
                     'total_supply': total_supply,
-                    'num_holders': meta_data.get('holder', 'N/A')  # Get number of token holders
+                    'num_holders': market_data.get('numHolders', 'N/A')  # Placeholder, replace with actual source if available
                 }
 
                 return result
