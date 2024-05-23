@@ -199,7 +199,7 @@ async def create_message(session, token_address):
             f"💹 Price Change (24h): {price_change_24h_str}\n"
             f"📊 Total Volume (24h): ${total_volume:,.0f}\n"
             f"🔍 Volume / Market Cap: {volume_market_cap_ratio_str}\n\n"
-            f"<b>Risk Management</b>\n"
+            f"<b>Key Links</b>\n"
             f"<a href='https://solscan.io/token/{safely_quote(token_address)}'>📄 Contract Address</a>\n"
             f"<a href='https://rugcheck.xyz/tokens/{safely_quote(token_address)}'>🥸 RugCheck</a>\n"
             f"<a href='https://birdeye.so/token/{safely_quote(token_address)}?chain=solana'>🦅 BirdEye</a> | "
