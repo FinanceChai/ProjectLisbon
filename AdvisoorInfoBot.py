@@ -257,7 +257,7 @@ def main():
     async def log_update(update: Update, context: CallbackContext):
         logger.debug(f"Received update: {update}")
 
-    application.add_handler(MessageHandler(Filters.all, log_update))
+    application.add_handler(MessageHandler(filters.ALL, log_update))
     application.add_handler(CommandHandler("search", handle_token_info))
 
     application.run_webhook(listen="0.0.0.0",
