@@ -18,7 +18,7 @@ load_dotenv()
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
 SOLSCAN_API_KEY = os.getenv('SOLSCAN_API_KEY')
 WEBHOOK_URL = os.getenv('WEBHOOK_URL')  # The URL where Telegram will send updates
-PORT = int(os.getenv('PORT', '443'))  # Change PORT to 443
+PORT = 443  # Use port 443 for HTTPS
 
 # Check if the TELEGRAM_TOKEN is set
 if not TELEGRAM_TOKEN:
@@ -261,7 +261,7 @@ def main():
     application.add_handler(CommandHandler("search", handle_token_info))
 
     application.run_webhook(listen="0.0.0.0",
-                            port=PORT,  # Using PORT from environment
+                            port=PORT,  # Using PORT 443
                             url_path=TELEGRAM_TOKEN,
                             webhook_url=f"{WEBHOOK_URL}/{TELEGRAM_TOKEN}")
     logger.debug(f"Webhook URL: {WEBHOOK_URL}/{TELEGRAM_TOKEN}")
