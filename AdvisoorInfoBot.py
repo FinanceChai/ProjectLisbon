@@ -145,8 +145,8 @@ async def create_message(session, token_address):
             top_sums_str = f"Top 5: {top_5_sum:.2f}% | Top 10: {top_10_sum:.2f}%"
 
             message_lines.append(f"\n<b>Holder Distribution</b>\n")
-            message_lines.append(f"Top 10:\n{top_holder_percentages_str}")
-            message_lines.append(f"\n{top_sums_str}\n")
+            message_lines.append(f"T10 Distribution:\n{top_holder_percentages_str}")
+            message_lines.append(f"{top_sums_str}\n")
 
         message_lines.append(
             f"\n<b>Liquidity</b>\n"
