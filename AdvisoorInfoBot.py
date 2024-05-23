@@ -31,33 +31,37 @@ async def fetch_token_metadata(session, token_address):
     timestamp_now = int(now.timestamp())
     timestamp_one_hour_ago = int(one_hour_ago.timestamp())
 
-    url = f"https://pro-api.solscan.io/v1.0/market/token/{safely_quote(token_address)}?limit=10&offset=0&startTime={timestamp_one_hour_ago}&endTime={timestamp_now}"
+    market_url = f"https://pro-api.solscan.io/v1.0/market/token/{safely_quote(token_address)}?limit=10&offset=0&startTime={timestamp_one_hour_ago}&endTime={timestamp_now}"
+    meta_url = f"https://pro-api.solscan.io/v1.0/token/meta?tokenAddress={safely_quote(token_address)}"
     headers = {'accept': '*/*', 'token': SOLSCAN_API_KEY}
-    async with session.get(url, headers=headers) as response:
-        if response.status == 200:
-            data = await response.json()
-            if 'markets' in data and data['markets']:
-                market = data['markets'][0]  # Assuming you want the first market listed
+    
+    async with session.get(market_url, headers=headers) as market_response, session.get(meta_url, headers=headers) as meta_response:
+        if market_response.status == 200 and meta_response.status == 200:
+            market_data = await market_response.json()
+            meta_data = await meta_response.json()
+
+            if 'markets' in market_data and market_data['markets']:
+                market = market_data['markets'][0]  # Assuming you want the first market listed
 
                 result = {
-                    'token_symbol': market.get('base', {}).get('symbol'),
-                    'token_name': market.get('base', {}).get('name'),
-                    'decimals': market.get('base', {}).get('decimals'),
-                    'icon_url': market.get('base', {}).get('icon'),
-                    'price_usdt': data.get('priceUsdt'),
-                    'volume_usdt': sum(market.get('volume24h', 0) for market in data['markets'] if market.get('volume24h') is not None),  # Calculate the total volume over the last hour
-                    'market_cap_fd': data.get('marketCapFD'),
-                    'total_liquidity': sum(market.get('liquidity', 0) for market in data['markets'] if market.get('liquidity') is not None),  # Calculate the total liquidity
-                    'price_change_24h': data.get('priceChange24h'),
-                    'total_supply': data.get('totalSupply'),  # Fetch total token supply
-                    'num_holders': data.get('numHolders')  # Fetch number of token holders
+                    'token_symbol': meta_data.get('symbol', 'Unknown'),
+                    'token_name': meta_data.get('name', 'Unknown'),
+                    'decimals': meta_data.get('decimals', 0),
+                    'icon_url': meta_data.get('icon'),
+                    'price_usdt': meta_data.get('price', 'N/A'),
+                    'volume_usdt': sum(market.get('volume24h', 0) for market in market_data['markets'] if market.get('volume24h') is not None),  # Calculate the total volume over the last hour
+                    'market_cap_fd': market_data.get('marketCapFD'),
+                    'total_liquidity': sum(market.get('liquidity', 0) for market in market_data['markets'] if market.get('liquidity') is not None),  # Calculate the total liquidity
+                    'price_change_24h': market_data.get('priceChange24h'),
+                    'total_supply': meta_data.get('supply', 'N/A'),
+                    'num_holders': market_data.get('numHolders', 'N/A')  # Placeholder, replace with actual source if available
                 }
 
                 return result
             else:
                 print(f"No market data available for token: {token_address}")
         else:
-            print(f"Failed to fetch metadata, status code: {response.status}")
+            print(f"Failed to fetch metadata, status code: {market_response.status} and {meta_response.status}")
     return None
 
 async def fetch_top_holders(session, token_address):
