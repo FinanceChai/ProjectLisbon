@@ -63,7 +63,8 @@ async def fetch_token_metadata(session, token_address):
                     'website': meta_data.get('website'),
                     'twitter': meta_data.get('twitter'),
                     'tag': meta_data.get('tag'),
-                    'coingeckoId': meta_data.get('coingeckoId')
+                    'coingeckoId': meta_data.get('coingeckoId'),
+                    'holder': meta_data.get('holder')
                 }
 
                 return result
@@ -111,6 +112,7 @@ async def create_message(session, token_address):
         twitter = token_metadata.get('twitter')
         tag = token_metadata.get('tag')
         coingeckoId = token_metadata.get('coingeckoId')
+        holder = token_metadata.get('holder')
 
         if price_usdt != 'N/A' and token_metadata.get('price_change_24h') is not None:
             price_usdt = float(price_usdt)
@@ -146,6 +148,8 @@ async def create_message(session, token_address):
             message_lines.append(f"🏷️ Tag: {tag}")
         if coingeckoId:
             message_lines.append(f"🦎 CoinGecko ID: {coingeckoId}")
+        if holder:
+            message_lines.append(f"👤 Holder: {holder}")
 
         # Fetch and calculate top holders' percentage ownership
         top_holders = await fetch_top_holders(session, token_address)
