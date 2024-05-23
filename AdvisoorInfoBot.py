@@ -4,7 +4,7 @@ import logging
 from dotenv import load_dotenv
 from telegram import Bot, InlineKeyboardMarkup, InlineKeyboardButton, Update
 from urllib.parse import quote as safely_quote
-from telegram.ext import ApplicationBuilder, CommandHandler, CallbackContext
+from telegram.ext import ApplicationBuilder, CommandHandler, CallbackContext, MessageHandler, Filters
 from datetime import datetime, timedelta, timezone
 
 # Configure logging
@@ -18,6 +18,7 @@ load_dotenv()
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
 SOLSCAN_API_KEY = os.getenv('SOLSCAN_API_KEY')
 WEBHOOK_URL = os.getenv('WEBHOOK_URL')  # The URL where Telegram will send updates
+PORT = int(os.getenv('PORT', '8444'))  # Use PORT from environment or default to 8444
 
 # Check if the TELEGRAM_TOKEN is set
 if not TELEGRAM_TOKEN:
@@ -251,9 +252,16 @@ async def handle_token_info(update: Update, context: CallbackContext):
 
 def main():
     logger.debug("Starting bot with webhook")
+
+    # Add a handler to log all incoming updates (for debugging purposes)
+    async def log_update(update: Update, context: CallbackContext):
+        logger.debug(f"Received update: {update}")
+
+    application.add_handler(MessageHandler(Filters.all, log_update))
     application.add_handler(CommandHandler("search", handle_token_info))
+
     application.run_webhook(listen="0.0.0.0",
-                            port=int(os.getenv('PORT', '8444')),  # Changed port to 8444
+                            port=PORT,  # Using PORT from environment
                             url_path=TELEGRAM_TOKEN,
                             webhook_url=f"{WEBHOOK_URL}/{TELEGRAM_TOKEN}")
     logger.debug(f"Webhook URL: {WEBHOOK_URL}/{TELEGRAM_TOKEN}")
