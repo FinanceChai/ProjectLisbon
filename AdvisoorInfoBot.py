@@ -202,7 +202,8 @@ async def create_message(session, token_address):
             f"<b>Risk Management</b>\n"
             f"<a href='https://solscan.io/token/{safely_quote(token_address)}'>📄 Contract Address</a>\n"
             f"<a href='https://rugcheck.xyz/tokens/{safely_quote(token_address)}'>🥸 RugCheck</a>\n"
-            f"<a href='https://birdeye.so/token/{safely_quote(token_address)}?chain=solana'>🦅 BirdEye</a>\n"
+            f"<a href='https://birdeye.so/token/{safely_quote(token_address)}?chain=solana'>🦅 BirdEye</a> | "
+            f"<a href='https://dexscreener.com/solana/{safely_quote(token_address)}'>🧭 DexScreener</a>
         )
     
     final_message = '\n'.join(message_lines)
