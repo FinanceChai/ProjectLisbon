@@ -124,7 +124,6 @@ async def create_message(session, token_address):
             f"📈 Price: ${price_usdt}\n"
             f"🌛 Market Cap: {market_cap_fd}\n"
             f"🪙 Total Supply: {total_supply:,.0f}\n"
-            f"👥 Number of Holders: {num_holders}\n"
         )
 
         # Fetch and calculate top holders' percentage ownership
@@ -146,7 +145,8 @@ async def create_message(session, token_address):
             top_sums_str = f"Top 5: {top_5_sum:.2f}% | Top 10: {top_10_sum:.2f}%"
 
             message_lines.append(f"\n<b><u>Top 10 Holders Distribution</u></b>\n")
-            message_lines.append(top_holder_percentages_str)
+            message_lines.append(f"👥 Number of Holders: {num_holders}\n")
+            message_lines.append(f"Top 10:\n{top_holder_percentages_str}")
             message_lines.append(f"\n{top_sums_str}\n")
 
         message_lines.append(
