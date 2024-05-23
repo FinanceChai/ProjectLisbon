@@ -102,7 +102,7 @@ async def create_message(session, token_address):
         total_supply = token_metadata.get('total_supply', 0)  # Retrieve total token supply
         num_holders = token_metadata.get('holders', 'N/A')  # Retrieve number of token holders
         token_authority = token_metadata.get('token_authority')
-        token_authority_str = "✅" if token_authority is None else "❌"
+        token_authority_str = "🟢" if token_authority is None else "🔴"
 
         if price_usdt != 'N/A' and token_metadata.get('price_change_24h') is not None:
             price_usdt = float(price_usdt)
