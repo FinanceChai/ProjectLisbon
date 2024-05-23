@@ -1,10 +1,15 @@
 import os
 import aiohttp
+import logging
 from dotenv import load_dotenv
 from telegram import Bot, InlineKeyboardMarkup, InlineKeyboardButton, Update
 from urllib.parse import quote as safely_quote
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, CallbackContext
 from datetime import datetime, timedelta, timezone
+
+# Configure logging
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 # Load environment variables from .env file
 load_dotenv()
@@ -24,6 +29,7 @@ EXCLUDED_SYMBOLS = {"ETH", "BTC", "BONK", "Bonk"}  # Add or modify as necessary
 application = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
 
 async def fetch_token_metadata(session, token_address):
+    logger.debug(f"Fetching token metadata for: {token_address}")
     now = datetime.now(timezone.utc)
     one_hour_ago = now - timedelta(hours=1)
     timestamp_now = int(now.timestamp())
@@ -33,6 +39,9 @@ async def fetch_token_metadata(session, token_address):
     meta_url = f"https://pro-api.solscan.io/v1.0/token/meta?tokenAddress={safely_quote(token_address)}"
     headers = {'accept': '*/*', 'token': SOLSCAN_API_KEY}
     
+    logger.debug(f"Market URL: {market_url}")
+    logger.debug(f"Meta URL: {meta_url}")
+
     async with session.get(market_url, headers=headers) as market_response, session.get(meta_url, headers=headers) as meta_response:
         if market_response.status == 200 and meta_response.status == 200:
             market_data = await market_response.json()
@@ -65,29 +74,33 @@ async def fetch_token_metadata(session, token_address):
                     'holder': meta_data.get('holder')
                 }
 
-                print("Fetched token metadata:", result)  # Debug print statement
+                logger.debug(f"Fetched token metadata: {result}")
                 return result
             else:
-                print(f"No market data available for token: {token_address}")
+                logger.info(f"No market data available for token: {token_address}")
         else:
-            print(f"Failed to fetch metadata, status code: {market_response.status} and {meta_response.status}")
+            logger.error(f"Failed to fetch metadata, status code: {market_response.status} and {meta_response.status}")
     return None
 
 async def fetch_top_holders(session, token_address):
+    logger.debug(f"Fetching top holders for: {token_address}")
     url = f"https://pro-api.solscan.io/v1.0/token/holders?tokenAddress={safely_quote(token_address)}&limit=10&offset=0&fromAmount=0"
     headers = {'accept': '*/*', 'token': SOLSCAN_API_KEY}
+    logger.debug(f"Top holders URL: {url}")
+
     async with session.get(url, headers=headers) as response:
         if response.status == 200:
             data = await response.json()
             if 'data' in data:
                 return data['data']
             else:
-                print(f"No holder data available for token: {token_address}")
+                logger.info(f"No holder data available for token: {token_address}")
         else:
-            print(f"Failed to fetch holders, status code: {response.status}")
+            logger.error(f"Failed to fetch holders, status code: {response.status}")
     return []
 
 async def create_message(session, token_address):
+    logger.debug(f"Creating message for token: {token_address}")
     message_lines = [""]
     token_metadata = await fetch_token_metadata(session, token_address)
     
@@ -113,7 +126,7 @@ async def create_message(session, token_address):
         coingeckoId = token_metadata.get('coingeckoId')
         holder = token_metadata.get('holder')
 
-        print("Token Metadata for message creation:", {
+        logger.debug("Token Metadata for message creation: %s", {
             'token_symbol': token_symbol,
             'token_name': token_name,
             'price_usdt': price_usdt,
@@ -128,7 +141,7 @@ async def create_message(session, token_address):
             'tag': tag,
             'coingeckoId': coingeckoId,
             'holder': holder
-        })  # Debug print statement
+        })
 
         if price_usdt != 'N/A' and token_metadata.get('price_change_24h') is not None:
             price_usdt = float(price_usdt)
@@ -206,6 +219,8 @@ async def create_message(session, token_address):
     
     final_message = '\n'.join(message_lines)
 
+    logger.debug(f"Final Message: {final_message}")
+
     if len(message_lines) > 1:
         keyboard = [
             [InlineKeyboardButton("Photon 💡", url="https://photon-sol.tinyastro.io/@rubberd"),
@@ -216,6 +231,7 @@ async def create_message(session, token_address):
         return final_message, None
 
 async def handle_token_info(update: Update, context: CallbackContext):
+    logger.debug(f"Handling /search command with args: {context.args}")
     if len(context.args) != 1:
         await update.message.reply_text("Usage: /search [contract address]")
         return
@@ -229,12 +245,13 @@ async def handle_token_info(update: Update, context: CallbackContext):
             await update.message.reply_text("Failed to retrieve token information.")
 
 def main():
+    logger.debug("Starting bot with webhook")
     application.add_handler(CommandHandler("search", handle_token_info))
     application.run_webhook(listen="0.0.0.0",
                             port=int(os.getenv('PORT', '8443')),
                             url_path=TELEGRAM_TOKEN,
                             webhook_url=f"{WEBHOOK_URL}/{TELEGRAM_TOKEN}")
+    logger.debug(f"Webhook URL: {WEBHOOK_URL}/{TELEGRAM_TOKEN}")
 
 if __name__ == "__main__":
     main()
-
