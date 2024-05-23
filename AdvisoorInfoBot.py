@@ -267,4 +267,5 @@ def main():
     logger.debug(f"Webhook URL: {WEBHOOK_URL}/{TELEGRAM_TOKEN}")
 
 if __name__ == "__main__":
-    main()
+    app.run(host="0.0.0.0", port=5000)
+
