@@ -58,7 +58,8 @@ async def fetch_token_metadata(session, token_address):
                     'total_liquidity': sum(market.get('liquidity', 0) for market in market_data['markets'] if market.get('liquidity') is not None),  # Calculate the total liquidity
                     'price_change_24h': market_data.get('priceChange24h'),
                     'total_supply': total_supply,
-                    'num_holders': market_data.get('numHolders', 'N/A')  # Placeholder, replace with actual source if available
+                    'num_holders': market_data.get('numHolders', 'N/A'),  # Placeholder, replace with actual source if available
+                    'token_authority': meta_data.get('tokenAuthority')  # Get token authority
                 }
 
                 return result
@@ -100,6 +101,8 @@ async def create_message(session, token_address):
         total_liquidity = "${:,.0f}".format(token_metadata.get('total_liquidity', 0))
         total_supply = token_metadata.get('total_supply', 0)  # Retrieve total token supply
         num_holders = token_metadata.get('holders', 'N/A')  # Retrieve number of token holders
+        token_authority = token_metadata.get('token_authority')
+        token_authority_str = "✅" if token_authority is None else "❌"
 
         if price_usdt != 'N/A' and token_metadata.get('price_change_24h') is not None:
             price_usdt = float(price_usdt)
@@ -123,7 +126,8 @@ async def create_message(session, token_address):
             f"🔣 Symbol: {token_symbol}\n"
             f"📈 Price: ${price_usdt}\n"
             f"🌛 Market Cap: {market_cap_fd}\n"
-            f"🪙 Total Supply: {total_supply:,.0f}"
+            f"🪙 Total Supply: {total_supply:,.0f}\n"
+            f"Token Authority: {token_authority_str}\n"
         )
 
         # Fetch and calculate top holders' percentage ownership
@@ -181,7 +185,7 @@ async def handle_token_info(update: Update, context: ContextTypes.DEFAULT_TYPE):
     async with aiohttp.ClientSession() as session:
         message, reply_markup = await create_message(session, token_address)
         if message:
-            await send_telegram_message(Bot(token=TELEGRAM_TOKEN), CHAT_ID, message, reply_markup)
+            await send_telegram_message(Bot(TELEGRAM_TOKEN), CHAT_ID, message, reply_markup)
         else:
             await update.message.reply_text("Failed to retrieve token information.")
 
