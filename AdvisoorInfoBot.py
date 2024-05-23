@@ -149,7 +149,7 @@ async def create_message(session, token_address):
             message_lines.append(f"{top_sums_str}\n")
 
         message_lines.append(
-            f"\n<b>Liquidity</b>\n"
+            f"<b>Liquidity</b>\n"
             f"💧 DEX Liquidity: {total_liquidity}\n"
             f"🔍 DEX Liquidity / Market Cap: {liquidity_market_cap_ratio_str}\n\n"
             f"<b>Market Activity</b>\n"
