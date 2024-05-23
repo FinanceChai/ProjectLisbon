@@ -92,6 +92,7 @@ async def fetch_top_holders(session, token_address):
         if response.status == 200:
             data = await response.json()
             if 'data' in data:
+                logger.debug(f"Top holders data: {data['data']}")
                 return data['data']
             else:
                 logger.info(f"No holder data available for token: {token_address}")
@@ -105,6 +106,7 @@ async def create_message(session, token_address):
     token_metadata = await fetch_token_metadata(session, token_address)
     
     if not token_metadata:
+        logger.debug("No token metadata found.")
         message_lines.append(
             f"🔫 No data available for the provided token address 🔫\n\n"
             f"<a href='https://solscan.io/token/{safely_quote(token_address)}'>Go to Contract Address</a>\n"
@@ -237,11 +239,14 @@ async def handle_token_info(update: Update, context: CallbackContext):
         return
 
     token_address = context.args[0]
+    logger.debug(f"Token address received: {token_address}")
     async with aiohttp.ClientSession() as session:
         message, reply_markup = await create_message(session, token_address)
         if message:
+            logger.debug(f"Sending message: {message}")
             await update.message.reply_text(text=message, parse_mode='HTML', disable_web_page_preview=True, reply_markup=reply_markup)
         else:
+            logger.debug("Failed to retrieve token information.")
             await update.message.reply_text("Failed to retrieve token information.")
 
 def main():
