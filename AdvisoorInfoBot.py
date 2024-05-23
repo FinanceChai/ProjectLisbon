@@ -67,6 +67,7 @@ async def fetch_token_metadata(session, token_address):
                     'holder': meta_data.get('holder')
                 }
 
+                print("Fetched token metadata:", result)  # Debug print statement
                 return result
             else:
                 print(f"No market data available for token: {token_address}")
@@ -113,6 +114,23 @@ async def create_message(session, token_address):
         tag = token_metadata.get('tag')
         coingeckoId = token_metadata.get('coingeckoId')
         holder = token_metadata.get('holder')
+
+        print("Token Metadata for message creation:", {
+            'token_symbol': token_symbol,
+            'token_name': token_name,
+            'price_usdt': price_usdt,
+            'volume_usdt': volume_usdt,
+            'market_cap_fd': market_cap_fd,
+            'total_liquidity': total_liquidity,
+            'total_supply': total_supply,
+            'num_holders': num_holders,
+            'token_authority': token_authority_str,
+            'website': website,
+            'twitter': twitter,
+            'tag': tag,
+            'coingeckoId': coingeckoId,
+            'holder': holder
+        })  # Debug print statement
 
         if price_usdt != 'N/A' and token_metadata.get('price_change_24h') is not None:
             price_usdt = float(price_usdt)
