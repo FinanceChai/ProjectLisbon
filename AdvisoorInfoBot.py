@@ -1,10 +1,10 @@
 import os
 import aiohttp
 import logging
+import signal
 from dotenv import load_dotenv
 from telegram import Bot, InlineKeyboardMarkup, InlineKeyboardButton, Update
-from urllib.parse import quote as safely_quote
-from telegram.ext import ApplicationBuilder, CommandHandler, CallbackContext, MessageHandler, filters
+from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, CallbackContext, filters
 from datetime import datetime, timedelta, timezone
 
 # Configure logging
@@ -18,7 +18,7 @@ load_dotenv()
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
 SOLSCAN_API_KEY = os.getenv('SOLSCAN_API_KEY')
 WEBHOOK_URL = os.getenv('WEBHOOK_URL')  # The URL where Telegram will send updates
-PORT = 443  # Use port 443 for HTTPS
+PORT = int(os.getenv('PORT', 8443))  # Use port 8443 for HTTPS by default
 
 # Check if the TELEGRAM_TOKEN is set
 if not TELEGRAM_TOKEN:
@@ -250,6 +250,11 @@ async def handle_token_info(update: Update, context: CallbackContext):
             logger.debug("Failed to retrieve token information.")
             await update.message.reply_text("Failed to retrieve token information.")
 
+def shutdown(signum, frame):
+    logger.debug("Shutting down...")
+    application.stop()
+    logger.debug("Bot stopped")
+
 def main():
     logger.debug("Starting bot with webhook")
 
@@ -260,8 +265,12 @@ def main():
     application.add_handler(MessageHandler(filters.ALL, log_update))
     application.add_handler(CommandHandler("search", handle_token_info))
 
+    # Signal handling for graceful shutdown
+    signal.signal(signal.SIGINT, shutdown)
+    signal.signal(signal.SIGTERM, shutdown)
+
     application.run_webhook(listen="0.0.0.0",
-                            port=PORT,  # Using PORT 443
+                            port=PORT,  # Using updated PORT
                             url_path=TELEGRAM_TOKEN,
                             webhook_url=f"{WEBHOOK_URL}/{TELEGRAM_TOKEN}")
     logger.debug(f"Webhook URL: {WEBHOOK_URL}/{TELEGRAM_TOKEN}")
