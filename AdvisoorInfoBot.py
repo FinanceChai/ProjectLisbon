@@ -270,11 +270,12 @@ def main():
     signal.signal(signal.SIGINT, shutdown)
     signal.signal(signal.SIGTERM, shutdown)
 
-    application.run_webhook(listen="0.0.0.0",
-                            port=PORT,  # Using updated PORT
-                            url_path=TELEGRAM_TOKEN,
-                            webhook_url=f"{WEBHOOK_URL}/{TELEGRAM_TOKEN}")
-    logger.debug(f"Webhook URL: {WEBHOOK_URL}/{TELEGRAM_TOKEN}")
+application.run_webhook(
+    listen="0.0.0.0",
+    port=PORT,  # Using updated PORT
+    url_path=TELEGRAM_TOKEN,
+    webhook_url=f"{WEBHOOK_URL}/{TELEGRAM_TOKEN}"
+)
 
 if __name__ == "__main__":
     main()
