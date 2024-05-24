@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from telegram import Bot, InlineKeyboardMarkup, InlineKeyboardButton, Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, CallbackContext, filters
 from datetime import datetime, timedelta, timezone
+from urllib.parse import quote as safely_quote
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
