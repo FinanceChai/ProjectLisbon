@@ -242,14 +242,18 @@ async def handle_token_info(update: Update, context: CallbackContext):
 
     token_address = context.args[0]
     logger.debug(f"Token address received: {token_address}")
-    async with aiohttp.ClientSession() as session:
-        message, reply_markup = await create_message(session, token_address)
-        if message:
-            logger.debug(f"Sending message: {message}")
-            await update.message.reply_text(text=message, parse_mode='HTML', disable_web_page_preview=True, reply_markup=reply_markup)
-        else:
-            logger.debug("Failed to retrieve token information.")
-            await update.message.reply_text("Failed to retrieve token information.")
+    try:
+        async with aiohttp.ClientSession() as session:
+            message, reply_markup = await create_message(session, token_address)
+            if message:
+                logger.debug(f"Sending message: {message}")
+                await update.message.reply_text(text=message, parse_mode='HTML', disable_web_page_preview=True, reply_markup=reply_markup)
+            else:
+                logger.debug("Failed to retrieve token information.")
+                await update.message.reply_text("Failed to retrieve token information.")
+    except Exception as e:
+        logger.error(f"Error handling /search command: {e}")
+        await update.message.reply_text(f"An error occurred: {e}")
 
 def shutdown(signum, frame):
     logger.debug("Shutting down...")
