@@ -18,8 +18,6 @@ load_dotenv()
 # Retrieve the environment variables
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
 SOLSCAN_API_KEY = os.getenv('SOLSCAN_API_KEY')
-WEBHOOK_URL = os.getenv('WEBHOOK_URL')  # The URL where Telegram will send updates
-PORT = int(os.getenv('PORT', 8443))  # Use port 8443 for HTTPS by default
 
 # Check if the TELEGRAM_TOKEN is set
 if not TELEGRAM_TOKEN:
@@ -263,7 +261,7 @@ def shutdown(signum, frame):
     logger.debug("Bot stopped")
 
 def main():
-    logger.debug("Starting bot with webhook")
+    logger.debug("Starting bot with long polling")
 
     # Add a handler to log all incoming updates (for debugging purposes)
     async def log_update(update: Update, context: CallbackContext):
@@ -277,13 +275,9 @@ def main():
     signal.signal(signal.SIGINT, shutdown)
     signal.signal(signal.SIGTERM, shutdown)
 
-    application.run_webhook(
-        listen="0.0.0.0",
-        port=PORT,  # Using updated PORT
-        url_path=TELEGRAM_TOKEN,
-        webhook_url=f"{WEBHOOK_URL}/{TELEGRAM_TOKEN}"
-    )
-    logger.debug(f"Webhook URL: {WEBHOOK_URL}/{TELEGRAM_TOKEN}")
+    # Run the bot using long polling
+    application.run_polling()
+    logger.debug("Bot running with long polling")
 
 if __name__ == "__main__":
     main()
