@@ -162,6 +162,7 @@ async def create_message(session, token_address):
         liquidity_market_cap_ratio_str = "{:.0f}%".format(liquidity_market_cap_ratio)
 
         message_lines.append(
+            f"🤵🏼 <b>Advisoor Token Info Bot</b> 🤵🏼\n\n"
             f"Token Name: {token_name}\n\n"
             f"<b>Token Overview</b>\n"
             f"🔣 Symbol: {token_symbol}\n"
