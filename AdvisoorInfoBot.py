@@ -4,7 +4,7 @@ import logging
 import signal
 from dotenv import load_dotenv
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton, Update
-from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, CallbackContext, filters
+from telegram.ext import ApplicationBuilder, CommandHandler, CallbackContext
 from datetime import datetime, timedelta, timezone
 from urllib.parse import quote as safely_quote
 
@@ -225,22 +225,21 @@ async def create_message(session, token_address):
 
     logger.debug(f"Final Message: {final_message}")
 
-    if len(message_lines) > 1:
-        keyboard = [
-            [InlineKeyboardButton("Photon 💡", url="https://photon-sol.tinyastro.io/@rubberd"),
-            InlineKeyboardButton("Pepeboost 🐸", url="https://t.me/pepeboost_sol07_bot?start=ref_01inkp")]
-        ]
+    keyboard = InlineKeyboardMarkup([
+        [InlineKeyboardButton("Photon 💡", url="https://photon-sol.tinyastro.io/@rubberd"),
+         InlineKeyboardButton("Pepeboost 🐸", url="https://t.me/pepeboost_sol07_bot?start=ref_01inkp")]
+    ])
 
-    return final_message
+    return final_message, keyboard
 
 async def handle_token_info(update: Update, context: CallbackContext):
     logger.debug(f"Handling /search command with args: {context.args}")
     if context.args:
         token_address = context.args[0]
         async with aiohttp.ClientSession() as session:
-            message = await create_message(session, token_address)
+            message, keyboard = await create_message(session, token_address)
             logger.debug(f"Sending message: {message}")
-            await context.bot.send_message(chat_id=update.effective_chat.id, text=message, parse_mode='HTML', disable_web_page_preview=True)  # Disable web page preview
+            await context.bot.send_message(chat_id=update.effective_chat.id, text=message, parse_mode='HTML', disable_web_page_preview=True, reply_markup=keyboard)  # Disable web page preview
     else:
         await context.bot.send_message(chat_id=update.effective_chat.id, text="Please provide a token address.", parse_mode='HTML', disable_web_page_preview=True)
 
