@@ -236,12 +236,14 @@ async def create_message(session, token_address):
 
 async def handle_token_info(update: Update, context: CallbackContext):
     logger.debug(f"Handling /search command with args: {context.args}")
+    print(f"Handling /search command with args: {context.args}")  # Added for debugging
     if len(context.args) != 1:
         await update.message.reply_text("Usage: /search [contract address]")
         return
 
     token_address = context.args[0]
     logger.debug(f"Token address received: {token_address}")
+    print(f"Token address received: {token_address}")  # Added for debugging
     try:
         async with aiohttp.ClientSession() as session:
             message, reply_markup = await create_message(session, token_address)
@@ -255,10 +257,6 @@ async def handle_token_info(update: Update, context: CallbackContext):
         logger.error(f"Error handling /search command: {e}")
         await update.message.reply_text(f"An error occurred: {e}")
 
-async def log_update(update: Update, context: CallbackContext):
-    logger.debug(f"Received update: {update.to_dict()}")
-    print(f"Received update: {update.to_dict()}")  # Added for debugging
-
 def shutdown(signum, frame):
     logger.debug("Shutting down...")
     application.stop()
@@ -270,6 +268,7 @@ def main():
     # Add a handler to log all incoming updates (for debugging purposes)
     async def log_update(update: Update, context: CallbackContext):
         logger.debug(f"Received update: {update.to_dict()}")
+        print(f"Received update: {update.to_dict()}")  # Added for debugging
 
     application.add_handler(MessageHandler(filters.ALL, log_update))
     application.add_handler(CommandHandler("search", handle_token_info))
