@@ -159,125 +159,61 @@ async def create_message(session, token_address):
         volume_market_cap_ratio_str = "{:.2f}x".format(volume_market_cap_ratio)
 
         liquidity_market_cap_ratio = (token_metadata.get('total_liquidity', 0) / market_cap) * 100
-        liquidity_market_cap_ratio_str = "{:.2f}%".format(liquidity_market_cap_ratio)
+        liquidity_market_cap_ratio_str = "{:.0f}%".format(liquidity_market_cap_ratio)
 
         message_lines.append(
-            f"Token Name: {token_name}\n\n"
-            f"<b>Token Overview</b>\n"
-            f"🔣 Symbol: {token_symbol}\n"
-            f"📈 Price: ${price_usdt}\n"
-            f"🌛 Market Cap: {market_cap_fd}\n"
-            f"🪙 Total Supply: {total_supply:,.0f}\n"
-            f"📍 Token Authority: {token_authority_str}"
+            f"Token Authority: {token_authority_str}\n"
+            f"<a href='https://solscan.io/token/{safely_quote(token_address)}'>{token_name} ({token_symbol})</a>\n\n"
+            f"💵 <b>Price:</b> ${price_usdt} ({price_change_24h_str})\n"
+            f"💸 <b>Volume (1hr):</b> ${volume_usdt}\n"
+            f"📊 <b>Market Cap FD:</b> {market_cap_fd}\n"
+            f"🔒 <b>Total Liquidity:</b> {total_liquidity}\n"
+            f"🏦 <b>Total Supply:</b> {total_supply:,}\n"  # Add the total token supply
+            f"🔢 <b>Number of Holders:</b> {num_holders}\n"  # Add the number of token holders
+            f"🔄 <b>Volume/Market Cap:</b> {volume_market_cap_ratio_str}\n"
+            f"💧 <b>Liquidity/Market Cap:</b> {liquidity_market_cap_ratio_str}\n"
         )
 
         if website:
-            message_lines.append(f"🌐 Website: <a href='{website}'>{website}</a>")
+            message_lines.append(f"🌐 <b>Website:</b> <a href='{website}'>{website}</a>\n")
         if twitter:
-            message_lines.append(f"🐦 Twitter: <a href='https://twitter.com/{twitter}'>@{twitter}</a>")
+            message_lines.append(f"🐦 <b>Twitter:</b> <a href='{twitter}'>{twitter}</a>\n")
         if tag:
-            message_lines.append(f"🏷️ Tag: {tag}")
+            message_lines.append(f"🏷️ <b>Tag:</b> {tag}\n")
         if coingeckoId:
-            message_lines.append(f"🦎 CoinGecko ID: {coingeckoId}")
+            message_lines.append(f"🦎 <b>Coingecko:</b> {coingeckoId}\n")
         if holder:
-            message_lines.append(f"👤 Holder: {holder}")
+            message_lines.append(f"🔒 <b>Holder:</b> {holder}\n")
 
-        # Fetch and calculate top holders' percentage ownership
         top_holders = await fetch_top_holders(session, token_address)
         if top_holders:
-            top_holder_percentages = []
-            top_5_sum = 0
-            top_10_sum = 0
+            message_lines.append("\n<b>Top 10 Holders:</b>\n")
+            for i, holder in enumerate(top_holders, 1):
+                holder_address = holder['address']
+                amount = holder['amount']
+                amount_decimal = holder['amountDecimal']
+                amount_float = amount / (10 ** amount_decimal)
+                message_lines.append(f"{i}. {holder_address}: {amount_float:,.2f} {token_symbol}")
 
-            for i, holder in enumerate(top_holders):
-                amount = holder.get('amount') / (10 ** token_metadata.get('decimals', 0))
-                percentage = (amount / total_supply) * 100
-                top_holder_percentages.append(f"{percentage:.2f}%")
-                if i < 5:
-                    top_5_sum += percentage
-                top_10_sum += percentage
-
-            top_holder_percentages_str = " | ".join(top_holder_percentages)
-            top_sums_str = f"Σ Top 5: {top_5_sum:.2f}% | Σ Top 10: {top_10_sum:.2f}%"
-
-            message_lines.append(f"\n<b>Holder Distribution</b>")
-            message_lines.append(f"Top10 Distro: {top_holder_percentages_str}")
-            message_lines.append(f"{top_sums_str}\n")
-
-        message_lines.append(
-            f"<b>Liquidity</b>\n"
-            f"💧 DEX Liquidity: {total_liquidity}\n"
-            f"🔍 DEX Liquidity / Market Cap: {liquidity_market_cap_ratio_str}\n\n"
-            f"<b>Market Activity</b>\n"
-            f"💹 Price Change (24h): {price_change_24h_str}\n"
-            f"📊 Total Volume (24h): ${total_volume:,.0f}\n"
-            f"🔍 Volume / Market Cap: {volume_market_cap_ratio_str}\n\n"
-            f"<b>Key Links</b>\n"
-            f"<a href='https://solscan.io/token/{safely_quote(token_address)}'>📄 Contract Address</a>\n"
-            f"<a href='https://rugcheck.xyz/tokens/{safely_quote(token_address)}'>🥸 RugCheck</a>\n"
-            f"<a href='https://birdeye.so/token/{safely_quote(token_address)}?chain=solana'>🦅 BirdEye</a> | "
-            f"<a href='https://dexscreener.com/solana/{safely_quote(token_address)}'>🧭 DexScreener</a>"
-        )
-    
-    final_message = '\n'.join(message_lines)
-
-    logger.debug(f"Final Message: {final_message}")
-
-    if len(message_lines) > 1:
-        keyboard = [
-            [InlineKeyboardButton("Photon 💡", url="https://photon-sol.tinyastro.io/@rubberd"),
-            InlineKeyboardButton("Pepeboost 🐸", url="https://t.me/pepeboost_sol07_bot?start=ref_01inkp")]
-        ]
-        return final_message, InlineKeyboardMarkup(keyboard)
-    else:
-        return final_message, None
+    message = "\n".join(message_lines)
+    logger.debug(f"Final message: {message}")
+    return message
 
 async def handle_token_info(update: Update, context: CallbackContext):
     logger.debug(f"Handling /search command with args: {context.args}")
-    print(f"Handling /search command with args: {context.args}")  # Added for debugging
-    if len(context.args) != 1:
-        await update.message.reply_text("Usage: /search [contract address]")
-        return
-
-    token_address = context.args[0]
-    logger.debug(f"Token address received: {token_address}")
-    print(f"Token address received: {token_address}")  # Added for debugging
-    try:
+    if context.args:
+        token_address = context.args[0]
         async with aiohttp.ClientSession() as session:
-            message, reply_markup = await create_message(session, token_address)
-            if message:
-                logger.debug(f"Sending message: {message}")
-                await update.message.reply_text(text=message, parse_mode='HTML', disable_web_page_preview=True, reply_markup=reply_markup)
-            else:
-                logger.debug("Failed to retrieve token information.")
-                await update.message.reply_text("Failed to retrieve token information.")
-    except Exception as e:
-        logger.error(f"Error handling /search command: {e}")
-        await update.message.reply_text(f"An error occurred: {e}")
+            message = await create_message(session, token_address)
+            logger.debug(f"Sending message: {message}")
+            await context.bot.send_message(chat_id=update.effective_chat.id, text=message, parse_mode='HTML', disable_web_page_preview=False)
+    else:
+        await context.bot.send_message(chat_id=update.effective_chat.id, text="Please provide a token address.", parse_mode='HTML')
 
-def shutdown(signum, frame):
-    logger.debug("Shutting down...")
-    application.stop()
-    logger.debug("Bot stopped")
+# Register command handler
+application.add_handler(CommandHandler("search", handle_token_info))
 
-def main():
+# Start the bot
+if __name__ == '__main__':
     logger.debug("Starting bot with long polling")
-
-    # Add a handler to log all incoming updates (for debugging purposes)
-    async def log_update(update: Update, context: CallbackContext):
-        logger.debug(f"Received update: {update.to_dict()}")
-        print(f"Received update: {update.to_dict()}")  # Added for debugging
-
-    application.add_handler(MessageHandler(filters.ALL, log_update))
-    application.add_handler(CommandHandler("search", handle_token_info))
-
-    # Signal handling for graceful shutdown
-    signal.signal(signal.SIGINT, shutdown)
-    signal.signal(signal.SIGTERM, shutdown)
-
-    # Run the bot using long polling
-    application.run_polling()
-    logger.debug("Bot running with long polling")
-
-if __name__ == "__main__":
-    main()
+    application.run_polling(stop_signals=[signal.SIGINT, signal.SIGTERM])
