@@ -238,9 +238,9 @@ async def handle_token_info(update: Update, context: CallbackContext):
         async with aiohttp.ClientSession() as session:
             message = await create_message(session, token_address)
             logger.debug(f"Sending message: {message}")
-            await context.bot.send_message(chat_id=update.effective_chat.id, text=message, parse_mode='HTML', disable_web_page_preview=False)
+            await context.bot.send_message(chat_id=update.effective_chat.id, text=message, parse_mode='HTML', disable_web_page_preview=True)  # Disable web page preview
     else:
-        await context.bot.send_message(chat_id=update.effective_chat.id, text="Please provide a token address.", parse_mode='HTML')
+        await context.bot.send_message(chat_id=update.effective_chat.id, text="Please provide a token address.", parse_mode='HTML', disable_web_page_preview=True)
 
 # Register command handler
 application.add_handler(CommandHandler("search", handle_token_info))
