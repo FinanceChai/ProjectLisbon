@@ -260,9 +260,6 @@ def main():
     logger.debug("Starting bot with webhook")
 
     # Add a handler to log all incoming updates (for debugging purposes)
-    async def log_update(update: Update, context: CallbackContext):
-        logger.debug(f"Received update: {update}")
-
     application.add_handler(MessageHandler(filters.ALL, log_update))
     application.add_handler(CommandHandler("search", handle_token_info))
 
@@ -280,4 +277,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
