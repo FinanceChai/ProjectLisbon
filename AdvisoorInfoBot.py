@@ -119,7 +119,7 @@ async def create_message(session, token_address):
         market_cap_fd = "${:,.0f}".format(token_metadata.get('market_cap_fd', 0) or 0)
         total_liquidity = "${:,.0f}".format(token_metadata.get('total_liquidity', 0))
         total_supply = token_metadata.get('total_supply', 0)  # Retrieve total token supply
-        num_holders = token_metadata.get('holders', 'N/A')  # Retrieve number of token holders
+        num_holders = token_metadata.get('num_holders', 'N/A')  # Retrieve number of token holders
         token_authority = token_metadata.get('token_authority')
         token_authority_str = "🟢" if token_authority is None else "🔴"
         website = token_metadata.get('website')
@@ -191,7 +191,7 @@ async def create_message(session, token_address):
             for i, holder in enumerate(top_holders, 1):
                 holder_address = holder['address']
                 amount = holder['amount']
-                amount_decimal = holder['amountDecimal']
+                amount_decimal = holder.get('decimals', 9)  # Default to 9 if not provided
                 amount_float = amount / (10 ** amount_decimal)
                 message_lines.append(f"{i}. {holder_address}: {amount_float:,.2f} {token_symbol}")
 
