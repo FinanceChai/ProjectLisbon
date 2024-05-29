@@ -9,7 +9,7 @@ from datetime import datetime, timedelta, timezone
 from urllib.parse import quote as safely_quote
 
 # Configure logging
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname=s - %(message)s')
 logger = logging.getLogger(__name__)
 
 # Load environment variables
@@ -192,7 +192,8 @@ async def create_message(session, token_address):
             for i, holder in enumerate(top_holders):
                 amount = holder.get('amount') / (10 ** token_metadata.get('decimals', 0))
                 percentage = (amount / total_supply) * 100
-                top_holder_percentages.append(f"{percentage:.2f}%")
+                holder_address = holder['address']
+                top_holder_percentages.append(f"<a href='https://solscan.io/token/{safely_quote(holder_address)}'>{percentage:.2f}%</a>")
                 if i < 5:
                     top_5_sum += percentage
                 top_10_sum += percentage
