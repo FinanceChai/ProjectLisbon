@@ -255,6 +255,10 @@ async def handle_token_info(update: Update, context: CallbackContext):
         logger.error(f"Error handling /search command: {e}")
         await update.message.reply_text(f"An error occurred: {e}")
 
+async def log_update(update: Update, context: CallbackContext):
+    logger.debug(f"Received update: {update.to_dict()}")
+    print(f"Received update: {update.to_dict()}")  # Added for debugging
+
 def shutdown(signum, frame):
     logger.debug("Shutting down...")
     application.stop()
