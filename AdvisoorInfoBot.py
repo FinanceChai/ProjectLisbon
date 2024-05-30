@@ -9,7 +9,7 @@ from datetime import datetime, timedelta, timezone
 from urllib.parse import quote as safely_quote
 
 # Configure logging
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname=s - %(message)s')
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 # Load environment variables
@@ -61,7 +61,6 @@ async def fetch_token_metadata(session, token_address):
                     'icon_url': meta_data.get('icon'),
                     'price_usdt': meta_data.get('price', 'N/A'),
                     'volume_usdt': sum(market.get('volume24h', 0) for market in market_data['markets'] if market.get('volume24h') is not None),  # Calculate the total volume over the last hour
-                    'market_cap_fd': market_data.get('marketCapFD'),
                     'total_liquidity': sum(market.get('liquidity', 0) for market in market_data['markets'] if market.get('liquidity') is not None),  # Calculate the total liquidity
                     'price_change_24h': market_data.get('priceChange24h'),
                     'total_supply': total_supply,
@@ -116,7 +115,6 @@ async def create_message(session, token_address):
         token_name = token_metadata.get('token_name', 'Unknown')
         price_usdt = token_metadata.get('price_usdt', 'N/A')
         volume_usdt = "${:,.0f}".format(token_metadata.get('volume_usdt', 0))
-        market_cap_fd = "${:,.0f}".format(token_metadata.get('market_cap_fd', 0) or 0)
         total_liquidity = "${:,.0f}".format(token_metadata.get('total_liquidity', 0))
         total_supply = token_metadata.get('total_supply', 0)  # Retrieve total token supply
         num_holders = token_metadata.get('num_holders', 'N/A')  # Retrieve number of token holders
@@ -133,7 +131,6 @@ async def create_message(session, token_address):
             'token_name': token_name,
             'price_usdt': price_usdt,
             'volume_usdt': volume_usdt,
-            'market_cap_fd': market_cap_fd,
             'total_liquidity': total_liquidity,
             'total_supply': total_supply,
             'num_holders': num_holders,
@@ -153,12 +150,14 @@ async def create_message(session, token_address):
         else:
             price_change_24h_str = "N/A"
 
+        market_cap = total_supply * price_usdt if price_usdt != 'N/A' else 0
+        market_cap_str = "${:,.0f}".format(market_cap)
+
         total_volume = token_metadata.get('volume_usdt', 0)
-        market_cap = token_metadata.get('market_cap_fd', 1) or 1
-        volume_market_cap_ratio = total_volume / market_cap
+        volume_market_cap_ratio = total_volume / (market_cap or 1)
         volume_market_cap_ratio_str = "{:.2f}x".format(volume_market_cap_ratio)
 
-        liquidity_market_cap_ratio = (token_metadata.get('total_liquidity', 0) / market_cap) * 100
+        liquidity_market_cap_ratio = (token_metadata.get('total_liquidity', 0) / (market_cap or 1)) * 100
         liquidity_market_cap_ratio_str = "{:.0f}%".format(liquidity_market_cap_ratio)
 
         message_lines.append(
@@ -167,7 +166,7 @@ async def create_message(session, token_address):
             f"<b>Token Overview</b>\n"
             f"🔣 Symbol: {token_symbol}\n"
             f"📈 Price: ${price_usdt}\n"
-            f"🌛 Market Cap: {market_cap_fd}\n"
+            f"🌛 Market Cap: {market_cap_str}\n"
             f"🪙 Total Supply: {total_supply:,.0f}\n"
             f"📍 Token Authority: {token_authority_str}"
         )
