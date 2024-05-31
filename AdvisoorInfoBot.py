@@ -9,7 +9,7 @@ from datetime import datetime, timedelta, timezone
 from urllib.parse import quote as safely_quote
 
 # Configure logging
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levellevel)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 # Load environment variables
@@ -119,7 +119,7 @@ async def fetch_top_holders(session, token_address):
     logger.debug(f"Top holders URL: {url}")
 
     async with session.get(url, headers=headers) as response:
-        if response.status == 200:
+        if response.status == 200):
             data = await response.json()
             if 'data' in data:
                 logger.debug(f"Top holders data: {data['data']}")
@@ -158,131 +158,4 @@ async def create_message(session, token_address):
         token_authority = token_metadata.get('token_authority')
         token_authority_str = "🟢" if token_authority is None else "🔴"
         website = token_metadata.get('website')
-        twitter = token_metadata.get('twitter')
-        tag = token_metadata.get('tag')
-        coingeckoId = token_metadata.get('coingeckoId')
-        holder = token_metadata.get('holder')
-
-        logger.debug("Token Metadata for message creation: %s", {
-            'token_symbol': token_symbol,
-            'token_name': token_name,
-            'price_usdt': price_usdt,
-            'volume_usdt': volume_usdt,
-            'total_liquidity': total_liquidity,
-            'total_supply': total_supply,
-            'num_holders': num_holders,
-            'token_authority': token_authority_str,
-            'website': website,
-            'twitter': twitter,
-            'tag': tag,
-            'coingeckoId': coingeckoId,
-            'holder': holder
-        })
-
-        if price_usdt != 'N/A' and token_metadata.get('price_change_24h') is not None:
-            price_usdt = float(price_usdt)
-            price_change_24h = token_metadata.get('price_change_24h')
-            price_change_ratio = price_change_24h / (price_usdt - price_change_24h)
-            price_change_24h_str = "{:.2f}%".format(price_change_ratio * 100)
-        else:
-            price_change_24h_str = "N/A"
-
-        market_cap = total_supply * price_usdt if price_usdt != 'N/A' else 0
-        market_cap_str = "${:,.0f}".format(market_cap)
-
-        total_volume = token_metadata.get('volume_usdt', 0)
-        volume_market_cap_ratio = total_volume / (market_cap or 1)
-        volume_market_cap_ratio_str = "{:.2f}x".format(volume_market_cap_ratio)
-
-        liquidity_market_cap_ratio = (token_metadata.get('total_liquidity', 0) / (market_cap or 1)) * 100
-        liquidity_market_cap_ratio_str = "{:.0f}%".format(liquidity_market_cap_ratio)
-
-        message_lines.append(
-            f"🤵🏼 <b>Advisoor Token Info Bot</b> 🤵🏼\n\n"
-            f"Token Name: {token_name}\n\n"
-            f"<b>Token Overview</b>\n"
-            f"🔣 Symbol: {token_symbol}\n"
-            f"📈 Price: ${price_usdt}\n"
-            f"🌛 Market Cap: {market_cap_str}\n"
-            f"🪙 Total Supply: {total_supply:,.0f}\n"
-            f"📍 Token Authority: {token_authority_str}"
-        )
-
-        if website:
-            message_lines.append(f"🌐 Website: <a href='{website}'>{website}</a>")
-        if twitter:
-            message_lines.append(f"🐦 Twitter: <a href='https://twitter.com/{twitter}'>@{twitter}</a>")
-        if tag:
-            message_lines.append(f"🏷️ Tag: {tag}")
-        if coingeckoId:
-            message_lines.append(f"🦎 CoinGecko ID: {coingeckoId}")
-        if holder:
-            message_lines.append(f"👤 Holder: {holder}")
-
-        # Fetch and calculate top holders' percentage ownership
-        top_holders = await fetch_top_holders(session, token_address)
-        if top_holders:
-            top_holder_percentages = []
-            top_5_sum = 0
-            top_10_sum = 0
-
-            for i, holder in enumerate(top_holders):
-                amount = holder.get('amount') / (10 ** token_metadata.get('decimals', 0))
-                percentage = (amount / total_supply) * 100
-                holder_address = holder['address']
-                top_holder_percentages.append(f"<a href='https://solscan.io/token/{safely_quote(holder_address)}'>{percentage:.2f}%</a>")
-                if i < 5:
-                    top_5_sum += percentage
-                top_10_sum += percentage
-
-            top_holder_percentages_str = " | ".join(top_holder_percentages)
-            top_sums_str = f"Σ Top 5: {top_5_sum:.2f}% | Σ Top 10: {top_10_sum:.2f}%"
-
-            message_lines.append(f"\n<b>Holder Distribution</b>")
-            message_lines.append(f"Top10 Distro: {top_holder_percentages_str}")
-            message_lines.append(f"{top_sums_str}\n")
-
-        message_lines.append(
-            f"<b>Liquidity</b>\n"
-            f"💧 DEX Liquidity: {total_liquidity}\n"
-            f"🔍 DEX Liquidity / Market Cap: {liquidity_market_cap_ratio_str}\n\n"
-            f"<b>Market Activity</b>\n"
-            f"💹 Price Change (24h): {price_change_24h_str}\n"
-            f"📊 Total Volume (24h): ${total_volume:,.0f}\n"
-            f"🔍 Volume / Market Cap: {volume_market_cap_ratio_str}\n\n"
-            f"<b>Key Links</b>\n"
-            f"<a href='https://solscan.io/token/{safely_quote(token_address)}'>📄 Contract Address</a>\n"
-            f"<a href='https://rugcheck.xyz/tokens/{safely_quote(token_address)}'>🥸 RugCheck</a>\n"
-            f"<a href='https://birdeye.so/token/{safely_quote(token_address)}?chain=solana'>🦅 BirdEye</a> | "
-            f"<a href='https://dexscreener.com/solana/{safely_quote(token_address)}'>🧭 DexScreener</a>"
-        )
-
-    final_message = '\n'.join(message_lines)
-
-    logger.debug(f"Final Message: {final_message}")
-
-    keyboard = InlineKeyboardMarkup([
-        [InlineKeyboardButton("Photon 💡", url="https://photon-sol.tinyastro.io/@rubberd"),
-         InlineKeyboardButton("Pepeboost 🐸", url="https://t.me/pepeboost_sol07_bot?start=ref_01inkp")]
-    ])
-
-    return final_message, keyboard
-
-async def handle_token_info(update: Update, context: CallbackContext):
-    logger.debug(f"Handling /search command with args: {context.args}")
-    if context.args:
-        token_address = context.args[0]
-        async with aiohttp.ClientSession() as session:
-            message, keyboard = await create_message(session, token_address)
-            logger.debug(f"Sending message: {message}")
-            await context.bot.send_message(chat_id=update.effective_chat.id, text=message, parse_mode='HTML', disable_web_page_preview=True, reply_markup=keyboard)  # Disable web page preview
-    else:
-        await context.bot.send_message(chat_id=update.effective_chat.id, text="Please provide a token address.", parse_mode='HTML', disable_web_page_preview=True)
-
-# Register command handler
-application.add_handler(CommandHandler("search", handle_token_info))
-
-# Start the bot
-if __name__ == '__main__':
-    logger.debug("Starting bot with long polling")
-    application.run_polling(stop_signals=[signal.SIGINT, signal.SIGTERM])
+        twitter = token_metadata
