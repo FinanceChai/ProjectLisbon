@@ -81,6 +81,36 @@ async def fetch_token_metadata(session, token_address):
             logger.error(f"Failed to fetch metadata, status code: {market_response.status} and {meta_response.status}")
     return None
 
+async def fetch_latest_transaction(session, account):
+    url = f"https://pro-api.solscan.io/v1.0/account/transactions?account={account}&limit=1"
+    headers = {
+        'api-key': SOLSCAN_API_KEY
+    }
+
+    async with session.get(url, headers=headers) as response:
+        if response.status == 200:
+            data = await response.json()
+            if data and 'items' in data and data['items']:
+                return data['items'][0]['txHash']
+        else:
+            logger.error(f"Failed to fetch latest transactions, status code: {response.status}")
+    return None
+
+async def fetch_transaction_details(session, tx_hash):
+    url = f"https://pro-api.solscan.io/v1.0/transaction/{tx_hash}"
+    headers = {
+        'api-key': SOLSCAN_API_KEY
+    }
+
+    async with session.get(url, headers=headers) as response:
+        if response.status == 200:
+            transaction_details = await response.json()
+            logger.debug(f"Transaction details: {transaction_details}")
+            return transaction_details
+        else:
+            logger.error(f"Failed to fetch transaction details, status code: {response.status}")
+    return None
+
 async def fetch_top_holders(session, token_address):
     logger.debug(f"Fetching top holders for: {token_address}")
     url = f"https://pro-api.solscan.io/v1.0/token/holders?tokenAddress={safely_quote(token_address)}&limit=10&offset=0&fromAmount=0"
@@ -142,15 +172,11 @@ async def create_message(session, token_address):
             'holder': holder
         })
 
-        if price_usdt != 'N/A':
-            try:
-                price_usdt = float(price_usdt)
-                price_change_24h = token_metadata.get('price_change_24h', 0)
-                price_change_ratio = price_change_24h / (price_usdt - price_change_24h) if price_usdt - price_change_24h != 0 else 0
-                price_change_24h_str = "{:.2f}%".format(price_change_ratio * 100)
-            except (TypeError, ValueError) as e:
-                logger.error(f"Error calculating price change: {e}")
-                price_change_24h_str = "N/A"
+        if price_usdt != 'N/A' and token_metadata.get('price_change_24h') is not None:
+            price_usdt = float(price_usdt)
+            price_change_24h = token_metadata.get('price_change_24h')
+            price_change_ratio = price_change_24h / (price_usdt - price_change_24h)
+            price_change_24h_str = "{:.2f}%".format(price_change_ratio * 100)
         else:
             price_change_24h_str = "N/A"
 
@@ -161,94 +187,89 @@ async def create_message(session, token_address):
         volume_market_cap_ratio = total_volume / (market_cap or 1)
         volume_market_cap_ratio_str = "{:.2f}x".format(volume_market_cap_ratio)
 
-        liquidity_market_cap_ratio = (token_metadata.get('total_liquidity', 0) / (market_cap or 1)) * 100
-        liquidity_market_cap_ratio_str = "{:.0f}%".format(liquidity_market_cap_ratio)
+        dex_liquidity = token_metadata.get('total_liquidity', 0)
+        dex_liquidity_market_cap_ratio = dex_liquidity / (market_cap or 1)
+        dex_liquidity_market_cap_ratio_str = "{:.2f}%".format(dex_liquidity_market_cap_ratio * 100)
 
-        message_lines.append(
-            f"🤵🏼 <b>Advisoor Token Info Bot</b> 🤵🏼\n\n"
-            f"Token Name: {token_name}\n\n"
-            f"<b>Token Overview</b>\n"
-            f"🔣 Symbol: {token_symbol}\n"
-            f"📈 Price: ${price_usdt}\n"
-            f"🌛 Market Cap: {market_cap_str}\n"
-            f"🪙 Total Supply: {total_supply:,.0f}\n"
-            f"📍 Token Authority: {token_authority_str}"
-        )
+        message_lines.append("🤵🏼 <b>Advisoor Token Info Bot</b> 🤵🏼\n")
+        message_lines.append(f"Token Name: {token_name} \n")
 
-        if website:
-            message_lines.append(f"🌐 Website: <a href='{website}'>{website}</a>")
-        if twitter:
-            message_lines.append(f"🐦 Twitter: <a href='https://twitter.com/{twitter}'>@{twitter}</a>")
-        if tag:
-            message_lines.append(f"🏷️ Tag: {tag}")
-        if coingeckoId:
-            message_lines.append(f"🦎 CoinGecko ID: {coingeckoId}")
-        if holder:
-            message_lines.append(f"👤 Holder: {holder}")
+        message_lines.append("<b>Token Overview</b>")
+        message_lines.append(f"🔣 Symbol: {token_symbol}")
+        message_lines.append(f"📈 Price: ${price_usdt}")
+        message_lines.append(f"🌛 Market Cap: {market_cap_str}")
+        message_lines.append(f"🪙 Total Supply: {total_supply:,.0f}")
+        message_lines.append(f"📍 Token Authority: {token_authority_str}")
 
-        # Fetch and calculate top holders' percentage ownership
         top_holders = await fetch_top_holders(session, token_address)
+
         if top_holders:
-            top_holder_percentages = []
-            top_5_sum = 0
-            top_10_sum = 0
+            message_lines.append("<b>Holder Distribution</b>")
+            holder_links = []
+            for holder in top_holders:
+                percentage = holder['amount'] / total_supply * 100
+                holder_links.append(f"<a href='https://solscan.io/token/{safely_quote(holder['address'])}'>{percentage:.2f}%</a>")
+            message_lines.append(f"Top10 Distro: {' | '.join(holder_links)}")
 
-            for i, holder in enumerate(top_holders):
-                amount = holder.get('amount') / (10 ** token_metadata.get('decimals', 0))
-                percentage = (amount / total_supply) * 100
-                holder_address = holder['address']
-                top_holder_percentages.append(f"<a href='https://solscan.io/token/{safely_quote(holder_address)}'>{percentage:.2f}%</a>")
-                if i < 5:
-                    top_5_sum += percentage
-                top_10_sum += percentage
+            top5_sum = sum(holder['amount'] for holder in top_holders[:5])
+            top10_sum = sum(holder['amount'] for holder in top_holders[:10])
+            message_lines.append(f"Σ Top 5: {top5_sum / total_supply * 100:.2f}% | Σ Top 10: {top10_sum / total_supply * 100:.2f}%")
 
-            top_holder_percentages_str = " | ".join(top_holder_percentages)
-            top_sums_str = f"Σ Top 5: {top_5_sum:.2f}% | Σ Top 10: {top_10_sum:.2f}%"
+        message_lines.append("<b>Liquidity</b>")
+        message_lines.append(f"💧 DEX Liquidity: {total_liquidity}")
+        message_lines.append(f"🔍 DEX Liquidity / Market Cap: {dex_liquidity_market_cap_ratio_str}")
 
-            message_lines.append(f"\n<b>Holder Distribution</b>")
-            message_lines.append(f"Top10 Distro: {top_holder_percentages_str}")
-            message_lines.append(f"{top_sums_str}\n")
+        message_lines.append("<b>Market Activity</b>")
+        message_lines.append(f"💹 Price Change (24h): {price_change_24h_str}")
+        message_lines.append(f"📊 Total Volume (24h): {volume_usdt}")
+        message_lines.append(f"🔍 Volume / Market Cap: {volume_market_cap_ratio_str}")
 
-        message_lines.append(
-            f"<b>Liquidity</b>\n"
-            f"💧 DEX Liquidity: {total_liquidity}\n"
-            f"🔍 DEX Liquidity / Market Cap: {liquidity_market_cap_ratio_str}\n\n"
-            f"<b>Market Activity</b>\n"
-            f"💹 Price Change (24h): {price_change_24h_str}\n"
-            f"📊 Total Volume (24h): ${total_volume:,.0f}\n"
-            f"🔍 Volume / Market Cap: {volume_market_cap_ratio_str}\n\n"
-            f"<b>Key Links</b>\n"
-            f"<a href='https://solscan.io/token/{safely_quote(token_address)}'>📄 Contract Address</a>\n"
-            f"<a href='https://rugcheck.xyz/tokens/{safely_quote(token_address)}'>🥸 RugCheck</a>\n"
-            f"<a href='https://birdeye.so/token/{safely_quote(token_address)}?chain=solana'>🦅 BirdEye</a>"
-        )
+        message_lines.append("<b>Key Links</b>")
+        message_lines.append(f"<a href='https://solscan.io/token/{safely_quote(token_address)}'>📄 Contract Address</a>")
+        if coingeckoId:
+            message_lines.append(f"<a href='https://www.coingecko.com/en/coins/{safely_quote(coingeckoId)}'>🦎 CoinGecko</a>")
+        if tag:
+            message_lines.append(f"<a href='https://solscan.io/account/{safely_quote(tag)}'>🔍 Tag</a>")
+        if twitter:
+            message_lines.append(f"<a href='https://twitter.com/{safely_quote(twitter)}'>🐦 Twitter</a>")
+        if website:
+            message_lines.append(f"<a href='{safely_quote(website)}'>🌐 Website</a>")
+        message_lines.append(f"<a href='https://rugcheck.xyz/tokens/{safely_quote(token_address)}'>🥸 RugCheck</a>")
+        message_lines.append(f"<a href='https://birdeye.so/token/{safely_quote(token_address)}?chain=solana'>🦅 BirdEye</a>")
 
-    final_message = '\n'.join(message_lines)
+    message_text = "\n".join(message_lines)
+    logger.debug(f"Final Message: {message_text}")
 
-    logger.debug(f"Final Message: {final_message}")
+    return message_text
 
-    keyboard = InlineKeyboardMarkup([
-        [InlineKeyboardButton("Photon 💡", url="https://photon-sol.tinyastro.io/@rubberd"),
-         InlineKeyboardButton("Pepeboost 🐸", url="https://t.me/pepeboost_sol07_bot?start=ref_01inkp")]
-    ])
+async def send_token_info(update: Update, context: CallbackContext):
+    args = context.args
+    if not args:
+        await update.message.reply_text('Please provide a token address.')
+        return
 
-    return final_message, keyboard
+    token_address = args[0]
+    async with aiohttp.ClientSession() as session:
+        message_text = await create_message(session, token_address)
 
-async def handle_token_info(update: Update, context: CallbackContext):
-    logger.debug(f"Handling /search command with args: {context.args}")
-    if len(context.args) == 1:
-        token_address = context.args[0]
-        async with aiohttp.ClientSession() as session:
-            message, keyboard = await create_message(session, token_address)
-            logger.debug(f"Sending message: {message}")
-            await context.bot.send_message(chat_id=update.effective_chat.id, text=message, parse_mode='HTML', disable_web_page_preview=True, reply_markup=keyboard)  # Disable web page preview
-    else:
-        await context.bot.send_message(chat_id=update.effective_chat.id, text="Usage: /search [tokenAddress]", parse_mode='HTML', disable_web_page_preview=True)
+    await update.message.reply_text(message_text, parse_mode='HTML', disable_web_page_preview=True, reply_markup=InlineKeyboardMarkup([[
+        InlineKeyboardButton("Photon 💡", url="https://photon-sol.tinyastro.io/@rubberd"),
+        InlineKeyboardButton("Pepeboost 🐸", url="https://t.me/pepeboost_sol07_bot?start=ref_01inkp")
+    ]]))
 
-# Register command handler
-application.add_handler(CommandHandler("search", handle_token_info))
+application.add_handler(CommandHandler("search", send_token_info))
 
-# Start the bot
-if __name__ == '__main__':
+async def shutdown(application: ApplicationBuilder):
+    logger.info("Shutting down the bot...")
+    await application.bot.session.close()
+
+def signal_handler(sig, frame):
+    logger.info(f"Received signal: {sig}, shutting down gracefully...")
+    application.stop()
+
+signal.signal(signal.SIGINT, signal_handler)
+signal.signal(signal.SIGTERM, signal_handler)
+
+if __name__ == "__main__":
     logger.debug("Starting bot with long polling")
-    application.run_polling(stop_signals=[signal.SIGINT, signal.SIGTERM])
+    application.run_polling()
