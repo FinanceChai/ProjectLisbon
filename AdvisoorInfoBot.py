@@ -59,12 +59,12 @@ async def fetch_token_metadata(session, token_address):
                     'token_name': meta_data.get('name', 'Unknown'),
                     'decimals': decimals,
                     'icon_url': meta_data.get('icon'),
-                    'price_usdt': meta_data.get('price', 'N/A'),
+                    'price_usdt': market.get('price', 'N/A'),
                     'volume_usdt': sum(market.get('volume24h', 0) for market in market_data['markets'] if market.get('volume24h') is not None),  # Calculate the total volume over the last hour
                     'total_liquidity': sum(market.get('liquidity', 0) for market in market_data['markets'] if market.get('liquidity') is not None),  # Calculate the total liquidity
                     'price_change_24h': market_data.get('priceChange24h'),
                     'total_supply': total_supply,
-                    'num_holders': market_data.get('numHolders', 'N/A'),  # Placeholder, replace with actual source if available
+                    'num_holders': meta_data.get('holders', 'N/A'),  # Retrieve the number of holders from meta_data
                     'token_authority': meta_data.get('tokenAuthority'),  # Get token authority
                     'website': meta_data.get('website'),
                     'twitter': meta_data.get('twitter'),
