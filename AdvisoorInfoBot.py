@@ -27,7 +27,8 @@ EXCLUDED_SYMBOLS = {"ETH", "BTC", "BONK", "Bonk"}  # Add or modify as necessary
 # Initialize the Telegram bot application
 application = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
 
-async def fetch_token_metadata(session, chain_id, pair_address):
+async def fetch_token_metadata(session, pair_address):
+    chain_id = "solana"
     logger.debug(f"Fetching token metadata for: {pair_address} on chain: {chain_id}")
     url = f"https://api.dexscreener.com/latest/dex/pairs/{chain_id}/{safely_quote(pair_address)}"
     
@@ -71,10 +72,11 @@ async def fetch_token_metadata(session, chain_id, pair_address):
             logger.error(f"Failed to fetch metadata, status code: {response.status}")
     return None
 
-async def create_message(session, chain_id, pair_address):
+async def create_message(session, pair_address):
+    chain_id = "solana"
     logger.debug(f"Creating message for pair: {pair_address} on chain: {chain_id}")
     message_lines = [""]
-    token_metadata = await fetch_token_metadata(session, chain_id, pair_address)
+    token_metadata = await fetch_token_metadata(session, pair_address)
     
     if not token_metadata:
         logger.debug("No token metadata found.")
@@ -117,7 +119,7 @@ async def create_message(session, chain_id, pair_address):
         if price_usdt != 'N/A':
             price_usdt = float(price_usdt)
             price_change_24h = token_metadata.get('price_change_24h', 0)
-            price_change_ratio = price_change_24h / (price_usdt - price_change_24h)
+            price_change_ratio = price_change_24h / (price_usdt - price_change_24h) if price_usdt - price_change_24h != 0 else 0
             price_change_24h_str = "{:.2f}%".format(price_change_ratio * 100)
         else:
             price_change_24h_str = "N/A"
@@ -179,15 +181,14 @@ async def create_message(session, chain_id, pair_address):
 
 async def handle_token_info(update: Update, context: CallbackContext):
     logger.debug(f"Handling /search command with args: {context.args}")
-    if len(context.args) == 2:
-        chain_id = context.args[0]
-        pair_address = context.args[1]
+    if len(context.args) == 1:
+        pair_address = context.args[0]
         async with aiohttp.ClientSession() as session:
-            message, keyboard = await create_message(session, chain_id, pair_address)
+            message, keyboard = await create_message(session, pair_address)
             logger.debug(f"Sending message: {message}")
             await context.bot.send_message(chat_id=update.effective_chat.id, text=message, parse_mode='HTML', disable_web_page_preview=True, reply_markup=keyboard)  # Disable web page preview
     else:
-        await context.bot.send_message(chat_id=update.effective_chat.id, text="Usage: /search [chainId] [pairAddress]", parse_mode='HTML', disable_web_page_preview=True)
+        await context.bot.send_message(chat_id=update.effective_chat.id, text="Usage: /search [pairAddress]", parse_mode='HTML', disable_web_page_preview=True)
 
 # Register command handler
 application.add_handler(CommandHandler("search", handle_token_info))
