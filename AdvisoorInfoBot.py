@@ -188,7 +188,7 @@ async def handle_token_info(update: Update, context: CallbackContext):
             logger.debug(f"Sending message: {message}")
             await context.bot.send_message(chat_id=update.effective_chat.id, text=message, parse_mode='HTML', disable_web_page_preview=True, reply_markup=keyboard)  # Disable web page preview
     else:
-        await context.bot.send_message(chat_id=update.effective_chat.id, text="Usage: /search [tokenSymbol]", parse_mode='HTML', disable_web_page_preview=True)
+        await context.bot.send_message(chat_id=update.effective_chat.id, text="Usage: /search [tokenSymbol]", parse_mode='HTML', disable_web page_preview=True)
 
 # Register command handler
 application.add_handler(CommandHandler("search", handle_token_info))
