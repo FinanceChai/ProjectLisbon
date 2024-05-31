@@ -81,37 +81,6 @@ async def fetch_token_metadata(session, token_address):
             logger.error(f"Failed to fetch metadata, status code: {market_response.status} and {meta_response.status}")
     return None
 
-async def fetch_latest_transaction(session, account):
-    url = f"https://pro-api.solscan.io/v1.0/account/transactions?account={account}&limit=1"
-    headers = {
-        'api-key': SOLSCAN_API_KEY
-    }
-
-    async with session.get(url, headers=headers) as response:
-        if response.status == 200:
-            data = await response.json()
-            if data and 'items' in data and data['items']:
-                return data['items'][0]['txHash']
-        else:
-            logger.error(f"Failed to fetch latest transactions, status code: {response.status}")
-    return None
-
-async def fetch_transaction_details(session, tx_hash):
-    url = f"https://pro-api.solscan.io/v1.0/transaction/{tx_hash}"
-    headers = {
-        'api-key': SOLSCAN_API_KEY
-    }
-
-    async with session.get(url, headers=headers) as response:
-        if response.status == 200:
-            return await response.json()
-        else:
-            logger.error(f"Failed to fetch transaction details, status code: {response.status}")
-    return None
-
-async def log_transaction_details(tx_details):
-    logger.debug(f"Transaction Details: {tx_details}")
-
 async def fetch_top_holders(session, token_address):
     logger.debug(f"Fetching top holders for: {token_address}")
     url = f"https://pro-api.solscan.io/v1.0/token/holders?tokenAddress={safely_quote(token_address)}&limit=10&offset=0&fromAmount=0"
@@ -142,12 +111,6 @@ async def create_message(session, token_address):
             f"<a href='https://solscan.io/token/{safely_quote(token_address)}'>Go to Contract Address</a>\n"
         )
     else:
-        # Fetch latest transaction and log its details
-        latest_tx_hash = await fetch_latest_transaction(session, token_address)
-        if latest_tx_hash:
-            tx_details = await fetch_transaction_details(session, latest_tx_hash)
-            await log_transaction_details(tx_details)
-
         token_symbol = token_metadata.get('token_symbol', 'Unknown')
         token_name = token_metadata.get('token_name', 'Unknown')
         price_usdt = token_metadata.get('price_usdt', 'N/A')
@@ -179,11 +142,15 @@ async def create_message(session, token_address):
             'holder': holder
         })
 
-        if price_usdt != 'N/A' and token_metadata.get('price_change_24h') is not None:
-            price_usdt = float(price_usdt)
-            price_change_24h = token_metadata.get('price_change_24h')
-            price_change_ratio = price_change_24h / (price_usdt - price_change_24h)
-            price_change_24h_str = "{:.2f}%".format(price_change_ratio * 100)
+        if price_usdt != 'N/A':
+            try:
+                price_usdt = float(price_usdt)
+                price_change_24h = token_metadata.get('price_change_24h', 0)
+                price_change_ratio = price_change_24h / (price_usdt - price_change_24h) if price_usdt - price_change_24h != 0 else 0
+                price_change_24h_str = "{:.2f}%".format(price_change_ratio * 100)
+            except (TypeError, ValueError) as e:
+                logger.error(f"Error calculating price change: {e}")
+                price_change_24h_str = "N/A"
         else:
             price_change_24h_str = "N/A"
 
@@ -253,8 +220,7 @@ async def create_message(session, token_address):
             f"<b>Key Links</b>\n"
             f"<a href='https://solscan.io/token/{safely_quote(token_address)}'>📄 Contract Address</a>\n"
             f"<a href='https://rugcheck.xyz/tokens/{safely_quote(token_address)}'>🥸 RugCheck</a>\n"
-            f"<a href='https://birdeye.so/token/{safely_quote(token_address)}?chain=solana'>🦅 BirdEye</a> | "
-            f"<a href='https://dexscreener.com/solana/{safely_quote(token_address)}'>🧭 DexScreener</a>"
+            f"<a href='https://birdeye.so/token/{safely_quote(token_address)}?chain=solana'>🦅 BirdEye</a>"
         )
 
     final_message = '\n'.join(message_lines)
@@ -270,14 +236,14 @@ async def create_message(session, token_address):
 
 async def handle_token_info(update: Update, context: CallbackContext):
     logger.debug(f"Handling /search command with args: {context.args}")
-    if context.args:
+    if len(context.args) == 1:
         token_address = context.args[0]
         async with aiohttp.ClientSession() as session:
             message, keyboard = await create_message(session, token_address)
             logger.debug(f"Sending message: {message}")
             await context.bot.send_message(chat_id=update.effective_chat.id, text=message, parse_mode='HTML', disable_web_page_preview=True, reply_markup=keyboard)  # Disable web page preview
     else:
-        await context.bot.send_message(chat_id=update.effective_chat.id, text="Please provide a token address.", parse_mode='HTML', disable_web_page_preview=True)
+        await context.bot.send_message(chat_id=update.effective_chat.id, text="Usage: /search [tokenAddress]", parse_mode='HTML', disable_web_page_preview=True)
 
 # Register command handler
 application.add_handler(CommandHandler("search", handle_token_info))
