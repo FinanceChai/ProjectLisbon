@@ -109,6 +109,9 @@ async def fetch_transaction_details(session, tx_hash):
             logger.error(f"Failed to fetch transaction details, status code: {response.status}")
     return None
 
+async def log_transaction_details(tx_details):
+    logger.debug(f"Transaction Details: {tx_details}")
+
 async def fetch_top_holders(session, token_address):
     logger.debug(f"Fetching top holders for: {token_address}")
     url = f"https://pro-api.solscan.io/v1.0/token/holders?tokenAddress={safely_quote(token_address)}&limit=10&offset=0&fromAmount=0"
@@ -139,6 +142,12 @@ async def create_message(session, token_address):
             f"<a href='https://solscan.io/token/{safely_quote(token_address)}'>Go to Contract Address</a>\n"
         )
     else:
+        # Fetch latest transaction and log its details
+        latest_tx_hash = await fetch_latest_transaction(session, token_address)
+        if latest_tx_hash:
+            tx_details = await fetch_transaction_details(session, latest_tx_hash)
+            await log_transaction_details(tx_details)
+
         token_symbol = token_metadata.get('token_symbol', 'Unknown')
         token_name = token_metadata.get('token_name', 'Unknown')
         price_usdt = token_metadata.get('price_usdt', 'N/A')
