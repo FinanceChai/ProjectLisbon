@@ -81,6 +81,34 @@ async def fetch_token_metadata(session, token_address):
             logger.error(f"Failed to fetch metadata, status code: {market_response.status} and {meta_response.status}")
     return None
 
+async def fetch_latest_transaction(session, account):
+    url = f"https://pro-api.solscan.io/v1.0/account/transactions?account={account}&limit=1"
+    headers = {
+        'api-key': SOLSCAN_API_KEY
+    }
+
+    async with session.get(url, headers=headers) as response:
+        if response.status == 200:
+            data = await response.json()
+            if data and 'items' in data and data['items']:
+                return data['items'][0]['txHash']
+        else:
+            logger.error(f"Failed to fetch latest transactions, status code: {response.status}")
+    return None
+
+async def fetch_transaction_details(session, tx_hash):
+    url = f"https://pro-api.solscan.io/v1.0/transaction/{tx_hash}"
+    headers = {
+        'api-key': SOLSCAN_API_KEY
+    }
+
+    async with session.get(url, headers=headers) as response:
+        if response.status == 200:
+            return await response.json()
+        else:
+            logger.error(f"Failed to fetch transaction details, status code: {response.status}")
+    return None
+
 async def fetch_top_holders(session, token_address):
     logger.debug(f"Fetching top holders for: {token_address}")
     url = f"https://pro-api.solscan.io/v1.0/token/holders?tokenAddress={safely_quote(token_address)}&limit=10&offset=0&fromAmount=0"
