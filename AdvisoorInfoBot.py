@@ -5,7 +5,6 @@ import signal
 from dotenv import load_dotenv
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton, Update
 from telegram.ext import ApplicationBuilder, CommandHandler, CallbackContext
-from datetime import datetime, timedelta, timezone
 from urllib.parse import quote as safely_quote
 
 # Configure logging
@@ -35,14 +34,15 @@ async def fetch_token_metadata(session, pair_address):
     logger.debug(f"Dexscreener URL: {url}")
 
     async with session.get(url) as response:
+        logger.debug(f"Response status: {response.status}")
         if response.status == 200:
             data = await response.json()
+            logger.debug(f"Response data: {data}")
             pairs = data.get('pairs', [])
             if pairs:
                 pair = pairs[0]  # Assuming you want the first pair listed
 
                 base_token = pair.get('baseToken', {})
-                quote_token = pair.get('quoteToken', {})
                 volume = pair.get('volume', {})
                 price_change = pair.get('priceChange', {})
                 liquidity = pair.get('liquidity', {})
