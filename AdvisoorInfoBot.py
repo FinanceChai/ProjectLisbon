@@ -4,7 +4,7 @@ import logging
 import signal
 from dotenv import load_dotenv
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton, Update
-from telegram.ext import ApplicationBuilder, CommandHandler, CallbackContext
+from telegram.ext import ApplicationBuilder, CommandHandler, CallbackContext, ContextTypes
 from datetime import datetime, timedelta, timezone
 from urllib.parse import quote as safely_quote
 
@@ -128,14 +128,14 @@ async def fetch_top_holders(session, token_address):
     logger.debug(f"Top holders URL: {url}")
 
     async with session.get(url, headers=headers) as response:
-        if response.status == 200) {
+        if response.status == 200:
             data = await response.json()
             if 'data' in data:
                 logger.debug(f"Top holders data: {data['data']}")
                 return data['data']
             else:
                 logger.info(f"No holder data available for token: {token_address}")
-        } else {
+        else:
             logger.error(f"Failed to fetch holders, status code: {response.status}")
     return []
 
