@@ -4,7 +4,7 @@ import logging
 import signal
 from dotenv import load_dotenv
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton, Update
-from telegram.ext import ApplicationBuilder, CommandHandler, CallbackContext
+from telegram.ext import ApplicationBuilder, CommandHandler, CallbackContext, Application
 from datetime import datetime, timedelta, timezone
 from urllib.parse import quote as safely_quote
 
@@ -48,24 +48,34 @@ async def fetch_token_metadata(session, token_address):
             meta_data = await meta_response.json()
 
             if 'markets' in market_data and market_data['markets']:
-                market = market_data['markets'][0]  # Assuming you want the first market listed
-
                 decimals = meta_data.get('decimals', 0)
                 total_supply_raw = int(meta_data.get('supply', 0))
                 total_supply = total_supply_raw / (10 ** decimals) if decimals else total_supply_raw
+
+                markets = []
+                for market in market_data['markets']:
+                    markets.append({
+                        'address': market.get('address'),
+                        'ammId': market.get('ammId'),
+                        'autodetect': market.get('autodetect'),
+                        'base_symbol': market.get('base', {}).get('symbol', 'Unknown'),
+                        'quote_symbol': market.get('quote', {}).get('symbol', 'Unknown'),
+                        'name': market.get('name', 'Unknown'),
+                        'price': market.get('price', 'N/A'),
+                        'volume24h': market.get('volume24h', 0),
+                        'liquidity': market.get('liquidity', 0),
+                        'source': market.get('source', 'Unknown')
+                    })
 
                 result = {
                     'token_symbol': meta_data.get('symbol', 'Unknown'),
                     'token_name': meta_data.get('name', 'Unknown'),
                     'decimals': decimals,
                     'icon_url': meta_data.get('icon'),
-                    'price_usdt': market.get('price', 'N/A'),
-                    'volume_usdt': sum(market.get('volume24h', 0) for market in market_data['markets'] if market.get('volume24h') is not None),  # Calculate the total volume over the last hour
-                    'total_liquidity': sum(market.get('liquidity', 0) for market in market_data['markets'] if market.get('liquidity') is not None),  # Calculate the total liquidity
-                    'price_change_24h': market_data.get('priceChange24h'),
+                    'markets': markets,
                     'total_supply': total_supply,
-                    'num_holders': meta_data.get('holders', 'N/A'),  # Retrieve the number of holders from meta_data
-                    'token_authority': meta_data.get('tokenAuthority'),  # Get token authority
+                    'num_holders': meta_data.get('holders', 'N/A'),
+                    'token_authority': meta_data.get('tokenAuthority'),
                     'website': meta_data.get('website'),
                     'twitter': meta_data.get('twitter'),
                     'tag': meta_data.get('tag'),
@@ -205,7 +215,7 @@ async def send_token_info(update: Update, context: CallbackContext):
 
 application.add_handler(CommandHandler("search", send_token_info))
 
-async def shutdown(application):
+async def shutdown(application: Application):
     logger.info("Shutting down the bot...")
     await application.bot.session.close()
 
