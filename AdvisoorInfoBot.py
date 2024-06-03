@@ -52,6 +52,8 @@ async def fetch_token_metadata(session, token_address):
                 total_supply_raw = int(meta_data.get('supply', 0))
                 total_supply = total_supply_raw / (10 ** decimals) if decimals else total_supply_raw
 
+                logger.debug(f"Total supply raw: {total_supply_raw}, Decimals: {decimals}, Total supply: {total_supply}")
+
                 markets = []
                 for market in market_data['markets']:
                     markets.append({
@@ -172,12 +174,13 @@ async def create_message(session, token_address):
             message_lines.append("\n<b>Holder Distribution</b>")
             holder_links = []
             for holder in top_holders:
-                percentage = (holder['amount'] / total_supply) * 100
+                holder_amount = holder['amount'] / (10 ** token_metadata['decimals'])  # Adjust for decimals
+                percentage = (holder_amount / total_supply) * 100
                 holder_links.append(f"<a href='https://solscan.io/token/{safely_quote(holder['address'])}'>{percentage:.2f}%</a>")
             message_lines.append(f"Top10 Distro: {' | '.join(holder_links)}")
 
-            top5_sum = sum(holder['amount'] for holder in top_holders[:5])
-            top10_sum = sum(holder['amount'] for holder in top_holders[:10])
+            top5_sum = sum(holder['amount'] for holder in top_holders[:5]) / (10 ** token_metadata['decimals'])
+            top10_sum = sum(holder['amount'] for holder in top_holders[:10]) / (10 ** token_metadata['decimals'])
             message_lines.append(f"Σ Top 5: {top5_sum / total_supply * 100:.2f}% | Σ Top 10: {top10_sum / total_supply * 100:.2f}%")
 
         message_lines.append("\n<b>Key Links</b>")
