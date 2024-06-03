@@ -172,13 +172,13 @@ async def create_message(session, token_address):
             message_lines.append("\n<b>Holder Distribution</b>")
             holder_links = []
             for holder in top_holders:
-                percentage = (holder['amount'] / total_supply)
+                percentage = (holder['amount'] / total_supply) * 100
                 holder_links.append(f"<a href='https://solscan.io/token/{safely_quote(holder['address'])}'>{percentage:.2f}%</a>")
             message_lines.append(f"Top10 Distro: {' | '.join(holder_links)}")
 
             top5_sum = sum(holder['amount'] for holder in top_holders[:5])
             top10_sum = sum(holder['amount'] for holder in top_holders[:10])
-            message_lines.append(f"Σ Top 5: {top5_sum / total_supply:.2f}% | Σ Top 10: {top10_sum / total_supply:.2f}%")
+            message_lines.append(f"Σ Top 5: {top5_sum / total_supply * 100:.2f}% | Σ Top 10: {top10_sum / total_supply * 100:.2f}%")
 
         message_lines.append("\n<b>Key Links</b>")
         message_lines.append(f"<a href='https://solscan.io/token/{safely_quote(token_address)}'>📄 Contract Address</a>")
