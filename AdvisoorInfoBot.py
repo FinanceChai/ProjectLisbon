@@ -133,12 +133,18 @@ async def create_message(session, token_address):
         coingeckoId = token_metadata.get('coingeckoId')
         holder = token_metadata.get('holder')
 
+        # Calculate market cap
+        market_cap = total_supply * float(token_metadata['markets'][0]['price']) if token_metadata['markets'][0]['price'] != 'N/A' else 'N/A'
+        if market_cap != 'N/A':
+            market_cap = "${:,.2f}".format(market_cap)
+
         logger.debug("Token Metadata for message creation: %s", {
             'token_symbol': token_symbol,
             'token_name': token_name,
             'total_supply': total_supply,
             'num_holders': num_holders,
             'token_authority': token_authority_str,
+            'market_cap': market_cap,
             'website': website,
             'twitter': twitter,
             'tag': tag,
@@ -152,6 +158,7 @@ async def create_message(session, token_address):
         message_lines.append("<b>Token Overview</b>")
         message_lines.append(f"🔣 Symbol: {token_symbol}")
         message_lines.append(f"🪙 Total Supply: {total_supply:,.0f}")
+        message_lines.append(f"💰 Market Cap: {market_cap}")
         message_lines.append(f"📍 Token Authority: {token_authority_str}\n")
 
         for market in token_metadata['markets']:
