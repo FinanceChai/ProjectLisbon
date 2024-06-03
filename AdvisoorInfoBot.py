@@ -208,7 +208,7 @@ async def send_token_info(update: Update, context: CallbackContext):
     async with aiohttp.ClientSession() as session:
         message_text = await create_message(session, token_address)
 
-    await update.message.reply_text(message_text, parse_mode='HTML', disable web_page_preview=True, reply_markup=InlineKeyboardMarkup([[
+    await update.message.reply_text(message_text, parse_mode='HTML', disable_web_page_preview=True, reply_markup=InlineKeyboardMarkup([[
         InlineKeyboardButton("Photon 💡", url="https://photon-sol.tinyastro.io/@rubberd"),
         InlineKeyboardButton("Pepeboost 🐸", url="https://t.me/pepeboost_sol07_bot?start=ref_01inkp")
     ]]))
