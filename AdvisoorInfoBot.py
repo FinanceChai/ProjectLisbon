@@ -241,7 +241,7 @@ async def send_token_info(update: Update, context: CallbackContext):
         InlineKeyboardButton("Pepeboost 🐸", url="https://t.me/pepeboost_sol07_bot?start=ref_01inkp")
     ]]))
 
-application.add_handler(CommandHandler("search", send_token_info))
+application.add_handler(CommandHandler("search", send_token_info, filters=None))
 
 async def shutdown(application):
     logger.info("Shutting down the bot...")
@@ -257,3 +257,4 @@ signal.signal(signal.SIGTERM, signal_handler)
 if __name__ == "__main__":
     logger.debug("Starting bot with long polling")
     application.run_polling()
+
