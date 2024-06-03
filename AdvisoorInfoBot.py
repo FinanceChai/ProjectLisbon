@@ -128,14 +128,14 @@ async def fetch_top_holders(session, token_address):
     logger.debug(f"Top holders URL: {url}")
 
     async with session.get(url, headers=headers) as response:
-        if response.status == 200:
+        if response.status == 200) {
             data = await response.json()
             if 'data' in data:
                 logger.debug(f"Top holders data: {data['data']}")
                 return data['data']
             else:
                 logger.info(f"No holder data available for token: {token_address}")
-        else:
+        } else {
             logger.error(f"Failed to fetch holders, status code: {response.status}")
     return []
 
@@ -185,7 +185,7 @@ async def create_message(session, token_address):
         message_lines.append(f"📍 Token Authority: {token_authority_str}")
 
         for market in token_metadata['markets']:
-            price_usdt = market.get('price', 'N/A')
+            price_usdt = market.get('price', 0) if market.get('price') != 'N/A' else 0
             volume_usdt = "${:,.0f}".format(market.get('volume24h', 0))
             total_liquidity = "${:,.0f}".format(market.get('liquidity', 0))
             market_name = market.get('name', 'Unknown')
