@@ -169,7 +169,7 @@ async def create_message(session, token_address):
         top_holders = await fetch_top_holders(session, token_address)
 
         if top_holders:
-            message_lines.append("\n<b>Holder Distribution</b>")
+            message_lines.append("<b>Holder Distribution</b>")
             holder_links = []
             for holder in top_holders:
                 scaled_amount = holder['amount'] / (10 ** token_metadata['decimals'])
