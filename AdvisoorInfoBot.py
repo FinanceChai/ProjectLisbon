@@ -160,6 +160,8 @@ async def create_message(session, token_address):
         message_lines.append(f"🪙 Total Supply: {total_supply:,.0f}")
         message_lines.append(f"💰 Market Cap: {market_cap}")
         message_lines.append(f"📍 Token Authority: {token_authority_str}\n")
+        
+        message_lines.append(f"<b>Markets</b>")
 
         for market in token_metadata['markets']:
             price_usdt = market.get('price', 0) if market.get('price') != 'N/A' else 0
@@ -172,8 +174,6 @@ async def create_message(session, token_address):
             message_lines.append(f"📈 Price: ${price_usdt}")
             message_lines.append(f"📊 Total Volume (24h): {volume_usdt}")
             message_lines.append(f"💧 Total Liquidity: {total_liquidity}\n\n")
-            message_lines.append(f"<b>Markets</b>")
-
 
         top_holders = await fetch_top_holders(session, token_address)
 
