@@ -152,7 +152,7 @@ async def create_message(session, token_address):
         message_lines.append("<b>Token Overview</b>")
         message_lines.append(f"🔣 Symbol: {token_symbol}")
         message_lines.append(f"🪙 Total Supply: {total_supply:,.0f}")
-        message_lines.append(f"📍 Token Authority: {token_authority_str}")
+        message_lines.append(f"📍 Token Authority: {token_authority_str}\n")
 
         for market in token_metadata['markets']:
             price_usdt = market.get('price', 0) if market.get('price') != 'N/A' else 0
@@ -164,12 +164,12 @@ async def create_message(session, token_address):
             message_lines.append(f"<b>Market: {market_name} ({source})</b>")
             message_lines.append(f"📈 Price: ${price_usdt}")
             message_lines.append(f"📊 Total Volume (24h): {volume_usdt}")
-            message_lines.append(f"💧 Total Liquidity: {total_liquidity}")
+            message_lines.append(f"💧 Total Liquidity: {total_liquidity}\n")
 
         top_holders = await fetch_top_holders(session, token_address)
 
         if top_holders:
-            message_lines.append("<b>Holder Distribution</b>")
+            message_lines.append("\n<b>Holder Distribution</b>")
             holder_links = []
             for holder in top_holders:
                 percentage = (holder['amount'] / total_supply) * 100
@@ -180,7 +180,7 @@ async def create_message(session, token_address):
             top10_sum = sum(holder['amount'] for holder in top_holders[:10])
             message_lines.append(f"Σ Top 5: {top5_sum / total_supply * 100:.2f}% | Σ Top 10: {top10_sum / total_supply * 100:.2f}%")
 
-        message_lines.append("<b>Key Links</b>")
+        message_lines.append("\n<b>Key Links</b>")
         message_lines.append(f"<a href='https://solscan.io/token/{safely_quote(token_address)}'>📄 Contract Address</a>")
         if coingeckoId:
             message_lines.append(f"<a href='https://www.coingecko.com/en/coins/{safely_quote(coingeckoId)}'>🦎 CoinGecko</a>")
