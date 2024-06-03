@@ -171,7 +171,9 @@ async def create_message(session, token_address):
             message_lines.append(f"<b>Market: {market_name} ({source})</b>")
             message_lines.append(f"📈 Price: ${price_usdt}")
             message_lines.append(f"📊 Total Volume (24h): {volume_usdt}")
-            message_lines.append(f"💧 Total Liquidity: {total_liquidity}\n")
+            message_lines.append(f"💧 Total Liquidity: {total_liquidity}\n\n")
+            message_lines.append(f"<b>Markets</b>")
+
 
         top_holders = await fetch_top_holders(session, token_address)
 
