@@ -4,7 +4,7 @@ import logging
 import signal
 from dotenv import load_dotenv
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton, Update
-from telegram.ext import ApplicationBuilder, CommandHandler, CallbackContext, ContextTypes
+from telegram.ext import ApplicationBuilder, CommandHandler, CallbackContext
 from datetime import datetime, timedelta, timezone
 from urllib.parse import quote as safely_quote
 
@@ -185,7 +185,7 @@ async def create_message(session, token_address):
         message_lines.append(f"📍 Token Authority: {token_authority_str}")
 
         for market in token_metadata['markets']:
-            price_usdt = market.get('price', 0) if market.get('price') != 'N/A' else 0
+            price_usdt = market.get('price', 'N/A')
             volume_usdt = "${:,.0f}".format(market.get('volume24h', 0))
             total_liquidity = "${:,.0f}".format(market.get('liquidity', 0))
             market_name = market.get('name', 'Unknown')
@@ -245,7 +245,7 @@ async def send_token_info(update: Update, context: CallbackContext):
 
 application.add_handler(CommandHandler("search", send_token_info))
 
-async def shutdown(application):
+async def shutdown(application: ApplicationBuilder):
     logger.info("Shutting down the bot...")
     await application.bot.session.close()
 
