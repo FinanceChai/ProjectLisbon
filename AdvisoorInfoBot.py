@@ -143,9 +143,6 @@ async def create_message(session, token_address):
     else:
         token_symbol = token_metadata.get('token_symbol', 'Unknown')
         token_name = token_metadata.get('token_name', 'Unknown')
-        price_usdt = token_metadata.get('price_usdt', 'N/A')
-        volume_usdt = "${:,.0f}".format(token_metadata.get('volume_usdt', 0))
-        total_liquidity = "${:,.0f}".format(token_metadata.get('total_liquidity', 0))
         total_supply = token_metadata.get('total_supply', 0)  # Retrieve total token supply
         num_holders = token_metadata.get('num_holders', 'N/A')  # Retrieve number of token holders
         token_authority = token_metadata.get('token_authority')
@@ -159,9 +156,6 @@ async def create_message(session, token_address):
         logger.debug("Token Metadata for message creation: %s", {
             'token_symbol': token_symbol,
             'token_name': token_name,
-            'price_usdt': price_usdt,
-            'volume_usdt': volume_usdt,
-            'total_liquidity': total_liquidity,
             'total_supply': total_supply,
             'num_holders': num_holders,
             'token_authority': token_authority_str,
@@ -172,34 +166,25 @@ async def create_message(session, token_address):
             'holder': holder
         })
 
-        if price_usdt != 'N/A' and token_metadata.get('price_change_24h') is not None:
-            price_usdt = float(price_usdt)
-            price_change_24h = token_metadata.get('price_change_24h')
-            price_change_ratio = price_change_24h / (price_usdt - price_change_24h)
-            price_change_24h_str = "{:.2f}%".format(price_change_ratio * 100)
-        else:
-            price_change_24h_str = "N/A"
-
-        market_cap = total_supply * price_usdt if price_usdt != 'N/A' else 0
-        market_cap_str = "${:,.0f}".format(market_cap)
-
-        total_volume = token_metadata.get('volume_usdt', 0)
-        volume_market_cap_ratio = total_volume / (market_cap or 1)
-        volume_market_cap_ratio_str = "{:.2f}x".format(volume_market_cap_ratio)
-
-        dex_liquidity = token_metadata.get('total_liquidity', 0)
-        dex_liquidity_market_cap_ratio = dex_liquidity / (market_cap or 1)
-        dex_liquidity_market_cap_ratio_str = "{:.2f}%".format(dex_liquidity_market_cap_ratio * 100)
-
         message_lines.append("🤵🏼 <b>Advisoor Token Info Bot</b> 🤵🏼\n")
         message_lines.append(f"Token Name: {token_name} \n")
 
         message_lines.append("<b>Token Overview</b>")
         message_lines.append(f"🔣 Symbol: {token_symbol}")
-        message_lines.append(f"📈 Price: ${price_usdt}")
-        message_lines.append(f"🌛 Market Cap: {market_cap_str}")
         message_lines.append(f"🪙 Total Supply: {total_supply:,.0f}")
         message_lines.append(f"📍 Token Authority: {token_authority_str}")
+
+        for market in token_metadata['markets']:
+            price_usdt = market.get('price', 0) if market.get('price') != 'N/A' else 0
+            volume_usdt = "${:,.0f}".format(market.get('volume24h', 0))
+            total_liquidity = "${:,.0f}".format(market.get('liquidity') or 0)
+            market_name = market.get('name', 'Unknown')
+            source = market.get('source', 'Unknown')
+
+            message_lines.append(f"<b>Market: {market_name} ({source})</b>")
+            message_lines.append(f"📈 Price: ${price_usdt}")
+            message_lines.append(f"📊 Total Volume (24h): {volume_usdt}")
+            message_lines.append(f"💧 Total Liquidity: {total_liquidity}")
 
         top_holders = await fetch_top_holders(session, token_address)
 
@@ -207,22 +192,13 @@ async def create_message(session, token_address):
             message_lines.append("<b>Holder Distribution</b>")
             holder_links = []
             for holder in top_holders:
-                percentage = holder['amount'] / total_supply * 100
+                percentage = (holder['amount'] / total_supply) * 100
                 holder_links.append(f"<a href='https://solscan.io/token/{safely_quote(holder['address'])}'>{percentage:.2f}%</a>")
             message_lines.append(f"Top10 Distro: {' | '.join(holder_links)}")
 
             top5_sum = sum(holder['amount'] for holder in top_holders[:5])
             top10_sum = sum(holder['amount'] for holder in top_holders[:10])
             message_lines.append(f"Σ Top 5: {top5_sum / total_supply * 100:.2f}% | Σ Top 10: {top10_sum / total_supply * 100:.2f}%")
-
-        message_lines.append("<b>Liquidity</b>")
-        message_lines.append(f"💧 DEX Liquidity: {total_liquidity}")
-        message_lines.append(f"🔍 DEX Liquidity / Market Cap: {dex_liquidity_market_cap_ratio_str}")
-
-        message_lines.append("<b>Market Activity</b>")
-        message_lines.append(f"💹 Price Change (24h): {price_change_24h_str}")
-        message_lines.append(f"📊 Total Volume (24h): {volume_usdt}")
-        message_lines.append(f"🔍 Volume / Market Cap: {volume_market_cap_ratio_str}")
 
         message_lines.append("<b>Key Links</b>")
         message_lines.append(f"<a href='https://solscan.io/token/{safely_quote(token_address)}'>📄 Contract Address</a>")
@@ -241,6 +217,7 @@ async def create_message(session, token_address):
     logger.debug(f"Final Message: {message_text}")
 
     return message_text
+
 
 async def send_token_info(update: Update, context: CallbackContext):
     args = context.args
