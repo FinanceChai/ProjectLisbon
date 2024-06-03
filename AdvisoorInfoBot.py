@@ -245,7 +245,7 @@ async def send_token_info(update: Update, context: CallbackContext):
 
 application.add_handler(CommandHandler("search", send_token_info))
 
-async def shutdown(application: ApplicationBuilder):
+async def shutdown(application):
     logger.info("Shutting down the bot...")
     await application.bot.session.close()
 
