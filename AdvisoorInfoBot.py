@@ -159,7 +159,7 @@ async def create_message(session, token_address):
         message_lines.append(f"🔣 Symbol: {token_symbol}")
         message_lines.append(f"🪙 Total Supply: {total_supply:,.0f}")
         message_lines.append(f"💰 Market Cap: {market_cap}")
-        message_lines.append(f"📍 Token Authority: {token_authority_str}\n")
+        message_lines.append(f"📍 Token Authority: {token_authority_str}")
         
         message_lines.append(f"<b>Markets</b>")
 
