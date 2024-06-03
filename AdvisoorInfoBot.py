@@ -185,7 +185,7 @@ async def create_message(session, token_address):
         for market in token_metadata['markets']:
             price_usdt = market.get('price', 0) if market.get('price') != 'N/A' else 0
             volume_usdt = "${:,.0f}".format(market.get('volume24h', 0))
-            total_liquidity = "${:,.0f}".format(market.get('liquidity', 0))
+            total_liquidity = "${:,.0f}".format(market.get('liquidity') or 0)
             market_name = market.get('name', 'Unknown')
             source = market.get('source', 'Unknown')
 
@@ -257,4 +257,3 @@ signal.signal(signal.SIGTERM, signal_handler)
 if __name__ == "__main__":
     logger.debug("Starting bot with long polling")
     application.run_polling()
-
